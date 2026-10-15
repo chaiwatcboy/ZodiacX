@@ -6,7 +6,6 @@
 <title>โหราจักรวาล | ดูดวงครบทุกศาสตร์ เลข 7 ตัว 9 ฐาน ทักษา ทาโรต์ ทำนายฝัน AI ดูลายมือ</title>
 <meta name="description" content="ดูดวงฟรีครบทุกศาสตร์ เลข 7 ตัว 9 ฐาน ทักษาปกรณ์ สีมงคลประจำวัน 12 ราศี เลขศาสตร์ นักษัตรจีน ไพ่ทาโรต์ ทำนายฝัน และ AI ดูลายมือ">
 <meta name="theme-color" content="#1a0f33">
-<!-- Open Graph สำหรับแชร์ลงโซเชียล -->
 <meta property="og:type" content="website">
 <meta property="og:title" content="โหราจักรวาล | ดูดวงครบทุกศาสตร์ฟรี (Hybrid AI)">
 <meta property="og:description" content="เลข 7 ตัว 9 ฐาน ทักษา 12 ราศี ไพ่ทาโรต์ ทำนายฝัน AI ดูลายมือ ครบในที่เดียว">
@@ -84,11 +83,12 @@ th{background:rgba(245,201,106,.12);color:var(--gold);font-family:'Prompt',sans-
 .cam-box video{width:100%;height:100%;object-fit:cover;display:block}
 .cam-overlay{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
 .mirror{transform:scaleX(-1)}
-.cam-guide{position:absolute;left:12%;right:12%;top:9%;bottom:20%;border:3px dashed rgba(245,201,106,.85);border-radius:40% 40% 28% 28%;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:5.5rem;pointer-events:none;transition:.25s}
+.cam-guide{position:absolute;left:12%;right:12%;top:10%;bottom:20%;border:3px dashed rgba(245,201,106,.85);border-radius:40% 40% 28% 28%;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:5rem;pointer-events:none;transition:.25s}
 .cam-guide.locked{border-color:#7ee2a8;border-style:solid;background:rgba(126,226,168,.14);box-shadow:0 0 28px rgba(126,226,168,.45)}
-.cam-guide span{opacity:.3}
-.cam-count{font-family:'Prompt',sans-serif;font-size:3rem;color:#7ee2a8;text-shadow:0 2px 10px #000;font-weight:600}
-.cam-tip{position:absolute;top:10px;left:10px;right:10px;text-align:center;font-size:.92rem;text-shadow:0 1px 4px #000;color:#fff;background:rgba(0,0,0,.6);padding:6px 12px;border-radius:999px}
+.cam-guide span{opacity:.25}
+.cam-count{font-family:'Prompt',sans-serif;font-size:3.2rem;color:#7ee2a8;text-shadow:0 2px 12px #000;font-weight:600}
+.cam-hand-tag{position:absolute;top:52px;left:50%;transform:translateX(-50%);background:rgba(13,8,32,.85);border:1px solid var(--gold);color:var(--gold);padding:4px 14px;border-radius:999px;font-family:'Prompt',sans-serif;font-size:.9rem;font-weight:600;pointer-events:none}
+.cam-tip{position:absolute;top:10px;left:10px;right:10px;text-align:center;font-size:.9rem;text-shadow:0 1px 4px #000;color:#fff;background:rgba(0,0,0,.65);padding:6px 12px;border-radius:999px}
 .cam-ctrl{position:absolute;bottom:0;left:0;right:0;display:flex;justify-content:space-around;align-items:center;padding:14px;background:linear-gradient(transparent,rgba(0,0,0,.8))}
 .cam-ctrl button{border:none;background:rgba(255,255,255,.22);color:#fff;width:50px;height:50px;border-radius:50%;font-size:1.3rem;cursor:pointer;touch-action:manipulation}
 .cam-ctrl .shutter{width:72px;height:72px;background:#fff;border:5px solid rgba(255,255,255,.45);background-clip:padding-box}
@@ -195,14 +195,14 @@ footer{text-align:center;color:var(--muted);font-size:.85rem;padding:20px 16px 4
     <h2>AI สแกนและวิเคราะห์ลายมืออัตโนมัติ (Hybrid AI)</h2>
 
     <div class="card">
-      <span class="ai-badge">✨ Hybrid AI: MediaPipe (หน้าบ้าน) + Gemini Vision (หลังบ้าน)</span>
-      <h3>1. สแกนฝ่ามือด้วยกล้อง (ถ่ายและอ่านเส้นให้อัตโนมัติ)</h3>
-      <p class="muted">กางฝ่ามือค้างไว้ในกรอบ 1.5 วินาที กล้องจะนับถอยหลังถ่ายให้อัตโนมัติ จากนั้น AI ในเครื่องจะสแกนเส้นทันที และส่งให้ Cloud AI วิเคราะห์ซ้ำเพื่อความแม่นยำสูงสุด</p>
+      <span class="ai-badge">✨ Strict 5-Finger Lock + True Left/Right Hand Detection</span>
+      <h3>1. สแกนฝ่ามือด้วยกล้อง (แยกมือซ้าย-ขวา และถ่ายอัตโนมัติเมื่อมือนิ่งสนิท)</h3>
+      <p class="muted">หงายฝ่ามือเข้าหากล้องและกางนิ้วทั้ง 5 ให้ครบในกรอบ ค้างไว้นิ่งๆ 3 วินาที ระบบจะแยกข้างมือซ้าย/ขวาให้อัตโนมัติและลั่นชัตเตอร์เมื่อภาพชัดเท่านั้น</p>
       <div class="btn-row">
         <button type="button" class="btn" id="camBtn">📷 เปิดกล้อง AI สแกนมือ</button>
         <label for="fileGallery" class="btn ghost">🖼️ เลือกรูปจากอัลบั้ม</label>
         <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;margin:0">
-          <input type="checkbox" id="autoShotChk" checked style="width:auto"> ถ่ายอัตโนมัติเมื่อมือนิ่ง
+          <input type="checkbox" id="autoShotChk" checked style="width:auto"> ถ่ายอัตโนมัติเมื่อกางครบ 5 นิ้วและนิ่งสนิท
         </label>
       </div>
       <input type="file" id="fileGallery" accept="image/*" hidden>
@@ -212,7 +212,8 @@ footer{text-align:center;color:var(--muted);font-size:.85rem;padding:20px 16px 4
       <div class="cam-box" id="camBox" hidden>
         <video id="camVideo" playsinline autoplay muted></video>
         <canvas id="camOverlay" class="cam-overlay"></canvas>
-        <div class="cam-tip" id="camTip">แบฝ่ามือให้อยู่ในกรอบ...</div>
+        <div class="cam-tip" id="camTip">กำลังเตรียมระบบตรวจจับฝ่ามือ...</div>
+        <div class="cam-hand-tag" id="camHandTag" hidden>กำลังระบุข้างมือ...</div>
         <div class="cam-guide" id="camGuide">
           <span>✋</span>
           <div class="cam-count" id="camCount"></div>
@@ -261,7 +262,7 @@ footer{text-align:center;color:var(--muted);font-size:.85rem;padding:20px 16px 4
 
       <div class="grid">
         <div>
-          <label for="pm_hand">มือที่ใช้ดู</label>
+          <label for="pm_hand">มือที่ใช้ดู (AI ตรวจจับและเลือกให้อัตโนมัติ)</label>
           <select id="pm_hand">
             <option value="R">มือขวา — สิ่งที่สร้างขึ้นเองในปัจจุบัน</option>
             <option value="L">มือซ้าย — พื้นดวงที่ติดตัวมาแต่กำเนิด</option>
@@ -269,7 +270,7 @@ footer{text-align:center;color:var(--muted);font-size:.85rem;padding:20px 16px 4
         </div>
       </div>
       <div class="grid" id="palmForm" style="margin-top:14px"></div>
-      <p class="muted">* ระบบ AI เลือกตัวเลือกข้างต้นให้อัตโนมัติเมื่อสแกนภาพ (คุณสามารถปรับเปลี่ยนเองแล้วกดปุ่มอ่านคำทำนายซ้ำได้)</p>
+      <p class="muted">* ระบบ AI ระบุข้างมือ (ซ้าย/ขวา) และเลือกลักษณะเส้นข้างต้นให้อัตโนมัติเมื่อสแกนภาพ (ปรับเปลี่ยนเองได้ตามต้องการ)</p>
       <button type="button" class="btn" id="palmBtn">🔮 อ่านคำทำนายและซิงค์ขึ้น Cloud</button>
     </div>
     <div id="palmOut"></div>
@@ -350,7 +351,6 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   })();
 
-  // ฝัง URL ของคุณเป็นค่าเริ่มต้นในระบบ Hybrid
   const DEFAULT_GAS_URL = 'https://script.google.com/macros/s/AKfycbxbg0Gv1UaUsojHutttCBVTeQLKqAH8WIx8c7Q97lBDAYdDGnnoSLeJ3Txe_zThIh30lw/exec';
   const KEY = 'horaProfile';
   const HIST_KEY = 'horaProfileHistory';
@@ -366,14 +366,16 @@ document.addEventListener('DOMContentLoaded', function () {
 
   let camStream = null, camFacing = 'environment', palmURL = null, lastBase64 = '';
   let shareReady = false, shareFile = null;
-  let mpHands = null, detectLoopId = null, holdFrames = 0, lastLandmarks = null;
 
-  /* ================= ฟังก์ชันเชื่อมต่อ Hybrid Cloud (CORS-Safe) ================= */
+  // ตัวแปรสำหรับ AI Hand Detector & Strict Auto-Shutter
+  let mpHands = null, detectLoopId = null;
+  let camStartTime = 0, lockStartTime = 0, prevWrist = null;
+  let lastLandmarks = null, detectedHandSide = null; // 'L' หรือ 'R'
+
+  /* ================= ฟังก์ชันเชื่อมต่อ Hybrid Cloud ================= */
   function setCloudBadge(state, text) {
     const dot = $('#cloudDot'), txt = $('#cloudStatusText');
-    if (dot) {
-      dot.className = 'dot' + (state === 'ok' ? ' ok' : state === 'off' ? ' off' : '');
-    }
+    if (dot) dot.className = 'dot' + (state === 'ok' ? ' ok' : state === 'off' ? ' off' : '');
     if (txt) txt.textContent = text;
   }
 
@@ -381,7 +383,6 @@ document.addEventListener('DOMContentLoaded', function () {
     if (!CLOUD_ENABLED || !GAS_URL) return null;
     setCloudBadge('wait', 'Hybrid Cloud: กำลังซิงค์...');
     try {
-      // ใช้ text/plain เพื่อหลีกเลี่ยง CORS Preflight (OPTIONS) ของ Google Apps Script
       const res = await fetch(GAS_URL, {
         method: 'POST',
         redirect: 'follow',
@@ -392,7 +393,6 @@ document.addEventListener('DOMContentLoaded', function () {
       setCloudBadge('ok', 'Hybrid Cloud: ซิงค์สำเร็จ');
       return data;
     } catch (err) {
-      // โหมด Fallback: ส่งแบบ no-cors เพื่อให้ข้อมูลเข้า Sheet ได้แม้ติด Redirect Policy บางเบราว์เซอร์
       try {
         await fetch(GAS_URL, {
           method: 'POST',
@@ -423,7 +423,6 @@ document.addEventListener('DOMContentLoaded', function () {
         return true;
       }
     } catch (e) {}
-    // แม้ GET ping จะติด CORS ในบางกรณี แต่ POST แบบ text/plain ยังใช้งานได้
     setCloudBadge('ok', 'Hybrid Cloud: พร้อมส่งข้อมูล');
     return false;
   }
@@ -787,7 +786,7 @@ document.addEventListener('DOMContentLoaded', function () {
       : `<div class="card"><p>ยังไม่พบสัญลักษณ์ที่ตรงกับตำราในระบบ ลองเล่าโดยระบุสิ่งที่เห็นให้ชัดขึ้น เช่น สัตว์ คน สถานที่ หรือสิ่งของ</p><p class="muted">ในทางจิตวิทยา ความฝันมักสะท้อนความรู้สึกและเรื่องที่ค้างใจในช่วงนี้</p></div>`;
   }
 
-  /* ================= ดูลายมือ & Hybrid AI Hand Scanner ================= */
+  /* ================= ดูลายมือ & Strict AI Hand Scanner ================= */
   const PALM = {
     shape:{t:'รูปทรงมือ', o:{
       earth:['ธาตุดิน — ฝ่ามือเหลี่ยม นิ้วสั้น','ติดดิน ทำงานจริงจัง เชื่อถือได้ ชอบงานที่จับต้องได้'],
@@ -868,11 +867,12 @@ document.addEventListener('DOMContentLoaded', function () {
       mpHands = new window.Hands({
         locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
       });
+      // เพิ่มความเข้มงวดของ Confidence เป็น 0.78 เพื่อไม่ให้จับภาพมั่วเมื่อมือยังไม่เข้ากล้อง
       mpHands.setOptions({
         maxNumHands: 1,
         modelComplexity: 1,
-        minDetectionConfidence: 0.65,
-        minTrackingConfidence: 0.65
+        minDetectionConfidence: 0.78,
+        minTrackingConfidence: 0.78
       });
       mpHands.onResults(onHandResults);
     } catch (e) {
@@ -880,54 +880,153 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   }
 
+  /**
+   * ฟังก์ชันคำนวณข้างของมือที่แท้จริง (True Left/Right Handedness)
+   * แก้ปัญหา MediaPipe สลับซ้าย-ขวาเมื่อใช้กล้องหลัง (environment) vs กล้องหน้า (user)
+   * โดยตรวจสอบจากตำแหน่งนิ้วโป้งเทียบกับนิ้วก้อยเมื่อหงายฝ่ามือเข้าหากล้อง:
+   * - ในภาพปกติที่ไม่ได้กลับกระจก (กล้องหลัง): หงายฝ่ามือซ้าย นิ้วโป้งจะอยู่ทางซ้ายของจอ (x น้อยกว่านิ้วก้อย)
+   * - หงายฝ่ามือขวา นิ้วโป้งจะอยู่ทางขวาของจอ (x มากกว่านิ้วก้อย)
+   */
+  function determineTrueHandSide(lm, mpLabel) {
+    const thumbMcp = lm[2], pinkyMcp = lm[17];
+    const wrist = lm[0], midMcp = lm[9];
+    // ตรวจสอบว่ามือตั้งขึ้นตามปกติ (ปลายนิ้วชี้ขึ้นด้านบน y ของกลางมือน้อยกว่าข้อมือ)
+    const isUpright = midMcp.y < wrist.y;
+    if (isUpright && Math.abs(thumbMcp.x - pinkyMcp.x) > 0.06) {
+      // lm.x เป็นพิกัดภาพดิบจากกล้องเสมอ:
+      // ถ้าหงายฝ่ามือเข้าหากล้องตรงๆ นิ้วโป้งอยู่ฝั่งซ้ายของภาพ (thumbMcp.x < pinkyMcp.x) = มือซ้าย ('L')
+      return thumbMcp.x < pinkyMcp.x ? 'L' : 'R';
+    }
+    // กรณีวางมือแนวอื่น ใช้ค่าจาก MediaPipe แล้วกลับด้านเมื่อเป็นกล้องหลัง
+    if (mpLabel) {
+      if (camFacing === 'environment') {
+        return mpLabel === 'Left' ? 'R' : 'L';
+      } else {
+        return mpLabel === 'Left' ? 'L' : 'R';
+      }
+    }
+    return 'R';
+  }
+
+  /**
+   * ตรวจสอบอย่างเข้มงวดว่ากางฝ่ามือครบ 5 นิ้ว ขนาดพอดี และอยู่ในกรอบครบทุกจุด
+   */
+  function validateStrictOpenPalm(lm) {
+    // 1. ทุกจุดทั้ง 21 จุดต้องอยู่ในกรอบภาพ ไม่หลุดขอบจอ
+    for (let i = 0; i < lm.length; i++) {
+      if (lm[i].x < 0.08 || lm[i].x > 0.92 || lm[i].y < 0.08 || lm[i].y > 0.92) {
+        return { ok: false, reason: 'กรุณาขยับฝ่ามือให้อยู่ในกรอบเต็มทั้งมือ' };
+      }
+    }
+
+    // 2. ขนาดฝ่ามือต้องใกล้กล้องพอสมควร (ไม่ไกลจนเส้นไม่ชัด)
+    const wrist = lm[0], midMcp = lm[9];
+    const palmSize = Math.hypot(midMcp.x - wrist.x, midMcp.y - wrist.y);
+    if (palmSize < 0.16) {
+      return { ok: false, reason: 'ขยับฝ่ามือเข้ามาใกล้กล้องอีกนิด...' };
+    }
+
+    // 3. ตรวจสอบนิ้วทั้ง 4 (ชี้, กลาง, นาง, ก้อย) ว่ากางออกตรง ไม่ได้กำหมัดหรือหุบนิ้ว
+    const fingerPairs = [[8, 6, 5], [12, 10, 9], [16, 14, 13], [20, 18, 17]];
+    for (const [tipIdx, pipIdx, mcpIdx] of fingerPairs) {
+      const dTipWrist = Math.hypot(lm[tipIdx].x - wrist.x, lm[tipIdx].y - wrist.y);
+      const dPipWrist = Math.hypot(lm[pipIdx].x - wrist.x, lm[pipIdx].y - wrist.y);
+      const dMcpWrist = Math.hypot(lm[mcpIdx].x - wrist.x, lm[mcpIdx].y - wrist.y);
+      if (!(dTipWrist > dPipWrist * 1.08 && dPipWrist > dMcpWrist)) {
+        return { ok: false, reason: 'กรุณาแบฝ่ามือและกางนิ้วทั้ง 5 ออกให้สุด' };
+      }
+    }
+
+    // 4. ตรวจสอบนิ้วโป้งว่ากางออกไม่หุบติดฝ่ามือ
+    const thumbTip = lm[4], indexMcp = lm[5];
+    if (Math.hypot(thumbTip.x - indexMcp.x, thumbTip.y - indexMcp.y) < palmSize * 0.35) {
+      return { ok: false, reason: 'กางนิ้วโป้งออกเล็กน้อยเพื่อให้เห็นเส้นชีวิตชัดเจน' };
+    }
+
+    // 5. ตรวจสอบความนิ่งของมือ (ต้องไม่แกว่งไปมา)
+    if (prevWrist) {
+      const move = Math.hypot(wrist.x - prevWrist.x, wrist.y - prevWrist.y);
+      prevWrist = { x: wrist.x, y: wrist.y };
+      if (move > 0.022) {
+        return { ok: false, reason: 'ถือมือนิ่งๆ สักครู่...' };
+      }
+    } else {
+      prevWrist = { x: wrist.x, y: wrist.y };
+    }
+
+    return { ok: true, reason: '' };
+  }
+
   function onHandResults(results) {
-    const ov = $('#camOverlay'), v = $('#camVideo'), guide = $('#camGuide'), tip = $('#camTip'), cnt = $('#camCount');
+    const ov = $('#camOverlay'), v = $('#camVideo'), guide = $('#camGuide'), tip = $('#camTip'), cnt = $('#camCount'), hTag = $('#camHandTag');
     if (!ov || !v || !v.videoWidth) return;
     ov.width = v.videoWidth; ov.height = v.videoHeight;
     const ctx = ov.getContext('2d');
     ctx.clearRect(0, 0, ov.width, ov.height);
 
+    // หน่วงเวลา 2 วินาทีแรกหลังเปิดกล้องเพื่อป้องกันการลั่นชัตเตอร์ทันที
+    const now = performance.now();
+    if (now - camStartTime < 2000) {
+      if (tip) tip.textContent = 'เตรียมพร้อม... วางฝ่ามือให้เต็มกรอบ';
+      lockStartTime = 0;
+      return;
+    }
+
     if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
       const lm = results.multiHandLandmarks[0];
       lastLandmarks = lm;
 
-      ctx.fillStyle = '#7ee2a8';
+      // ระบุข้างมือ ซ้าย/ขวา ที่แท้จริงและอัปเดต Dropdown ทันที
+      const mpLabel = (results.multiHandedness && results.multiHandedness[0]) ? results.multiHandedness[0].label : null;
+      detectedHandSide = determineTrueHandSide(lm, mpLabel);
+      const handSel = $('#pm_hand');
+      if (handSel) handSel.value = detectedHandSide;
+      if (hTag) {
+        hTag.hidden = false;
+        hTag.textContent = detectedHandSide === 'L' ? '✋ ตรวจพบ: มือซ้าย (พื้นดวงกำเนิด)' : '✋ ตรวจพบ: มือขวา (ดวงปัจจุบัน)';
+      }
+
+      // วาดจุดข้อต่อฝ่ามือ 21 จุด
+      const check = validateStrictOpenPalm(lm);
+      ctx.fillStyle = check.ok ? '#7ee2a8' : '#ffd27a';
       lm.forEach(pt => {
         const px = (camFacing === 'user' ? 1 - pt.x : pt.x) * ov.width;
         const py = pt.y * ov.height;
-        ctx.beginPath(); ctx.arc(px, py, 6, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(px, py, 5.5, 0, Math.PI * 2); ctx.fill();
       });
 
-      const wrist = lm[0], midMcp = lm[9], midTip = lm[12];
-      const palmCentered = midMcp.x > 0.22 && midMcp.x < 0.78 && midMcp.y > 0.2 && midMcp.y < 0.85;
-      const handOpen = Math.hypot(midTip.x - wrist.x, midTip.y - wrist.y) > 0.28;
-
-      if (palmCentered && handOpen) {
-        holdFrames++;
+      if (check.ok) {
+        if (!lockStartTime) lockStartTime = now;
+        const elapsed = now - lockStartTime;
         if (guide) guide.classList.add('locked');
+
         const autoChk = $('#autoShotChk');
         if (autoChk && autoChk.checked) {
-          const remain = Math.max(0, Math.ceil((27 - holdFrames) / 9));
-          if (tip) tip.textContent = '✨ ล็อกตำแหน่งฝ่ามือแล้ว! ถือนิ่งๆ...';
-          if (cnt) cnt.textContent = remain > 0 ? remain : '📸';
-          if (holdFrames >= 27) {
-            holdFrames = 0;
+          // ต้องถือมือนิ่งสนิทต่อเนื่องครบ 3.0 วินาที (3000 ms) จึงจะลั่นชัตเตอร์
+          const remainSec = Math.ceil((3000 - elapsed) / 1000);
+          if (tip) tip.textContent = `✨ ล็อกฝ่ามือ${detectedHandSide === 'L' ? 'ซ้าย' : 'ขวา'}แล้ว! ถือนิ่งๆ ค้างไว้...`;
+          if (cnt) cnt.textContent = remainSec > 0 ? remainSec : '📸';
+          if (elapsed >= 3000) {
+            lockStartTime = 0;
             takeShot();
           }
         } else {
-          if (tip) tip.textContent = '✅ ตำแหน่งมือชัดเจน กดปุ่มถ่ายได้เลย';
+          if (tip) tip.textContent = `✅ ฝ่ามือ${detectedHandSide === 'L' ? 'ซ้าย' : 'ขวา'}ชัดเจน กดปุ่มชัตเตอร์เพื่อถ่ายได้เลย`;
+          if (cnt) cnt.textContent = '';
         }
       } else {
-        holdFrames = Math.max(0, holdFrames - 1);
+        lockStartTime = 0;
         if (guide) guide.classList.remove('locked');
         if (cnt) cnt.textContent = '';
-        if (tip) tip.textContent = 'ขยับฝ่ามือให้อยู่กลางกรอบและกางนิ้วออก...';
+        if (tip) tip.textContent = check.reason;
       }
     } else {
-      holdFrames = 0;
+      lockStartTime = 0;
+      prevWrist = null;
+      if (hTag) hTag.hidden = true;
       if (guide) guide.classList.remove('locked');
       if (cnt) cnt.textContent = '';
-      if (tip) tip.textContent = 'วางฝ่ามือให้อยู่ในกรอบ...';
+      if (tip) tip.textContent = 'หงายฝ่ามือเข้าหากล้องและกางนิ้วทั้ง 5 ให้อยู่ในกรอบ...';
     }
   }
 
@@ -945,7 +1044,8 @@ document.addEventListener('DOMContentLoaded', function () {
     if (camStream){ camStream.getTracks().forEach(t => t.stop()); camStream = null; }
     const v = $('#camVideo'); if (v) v.srcObject = null;
     const box = $('#camBox'); if (box) box.hidden = true;
-    holdFrames = 0;
+    const hTag = $('#camHandTag'); if (hTag) hTag.hidden = true;
+    lockStartTime = 0; prevWrist = null;
   }
 
   async function startCam(){
@@ -962,6 +1062,8 @@ document.addEventListener('DOMContentLoaded', function () {
       $('#camBox').hidden = false;
       try { await v.play(); } catch (e) {}
       camMsg('');
+      camStartTime = performance.now();
+      lockStartTime = 0;
       const box = $('#camBox'); if(box) box.scrollIntoView({behavior: 'smooth', block: 'center'});
       detectLoop();
     } catch (err) {
@@ -1011,18 +1113,23 @@ document.addEventListener('DOMContentLoaded', function () {
     if (f.type && !/^image\//.test(f.type)) { camMsg('<span class="bad">ไฟล์นี้ไม่ใช่รูปภาพ</span>'); return; }
     stopCam();
     lastLandmarks = null;
+    detectedHandSide = null;
     setPalmImage(URL.createObjectURL(f), true);
     e.target.value = '';
   }
 
   /**
-   * ระบบ Hybrid AI วิเคราะห์เส้นลายมือ:
-   * ขั้นที่ 1: ประมวลผล On-Device Sobel Edge & MediaPipe Landmarks ทันที (0 วินาที)
-   * ขั้นที่ 2: ส่งต่อไปยัง GAS Backend (Gemini Vision) เพื่ออัปเกรดความแม่นยำและซิงค์ลง Sheet
+   * วิเคราะห์รูปถ่ายฝ่ามือ (ทั้งจากกล้องสดและอัปโหลดไฟล์)
+   * หากอัปโหลดไฟล์รูปภาพมา ระบบจะส่งเข้า MediaPipe เพื่อตรวจหาข้างมือซ้าย/ขวาจากภาพนิ่งด้วย
    */
   async function autoAnalyzePalmLines(img){
     const pq = $('#palmQ');
     try {
+      // หากเป็นการเลือกรูปจากอัลบั้ม ให้รัน MediaPipe บนภาพนิ่งเพื่อหาว่าเป็นมือซ้ายหรือมือขวา
+      if (!detectedHandSide && mpHands) {
+        try { await mpHands.send({image: img}); } catch (e) {}
+      }
+
       const S = 128;
       const c = document.createElement('canvas'); c.width = c.height = S;
       const x = c.getContext('2d'); x.drawImage(img, 0, 0, S, S);
@@ -1038,7 +1145,7 @@ document.addEventListener('DOMContentLoaded', function () {
       }
       const avgLum = sumLum / (S * S);
 
-      let zHeart = 0, zHead = 0, zLife = 0, zFate = 0;
+      let zHeart = 0, zHead = 0, zLife = 0, zFate = 0, leftMass = 0, rightMass = 0;
       for (let y = 25; y < 100; y++) {
         for (let xx = 25; xx < 100; xx++) {
           const gx = Math.abs(gray[y*S + (xx+1)] - gray[y*S + (xx-1)]);
@@ -1048,8 +1155,18 @@ document.addEventListener('DOMContentLoaded', function () {
           else if (y < 75) zHead += gy;
           if (xx < 64 && y > 48) zLife += mag;
           if (xx >= 50 && xx <= 78) zFate += gx;
+          if (y > 55) {
+            if (xx < 64) leftMass += mag; else rightMass += mag;
+          }
         }
       }
+
+      // ถ้ายังไม่ได้ข้างมือจาก MediaPipe ให้ประเมินจากฝั่งเนินนิ้วโป้งในภาพนิ่ง
+      if (!detectedHandSide) {
+        detectedHandSide = leftMass >= rightMass ? 'L' : 'R';
+      }
+      const handSel = $('#pm_hand');
+      if (handSel) handSel.value = detectedHandSide;
 
       let shapeVal = ['earth','air','fire','water'][ Math.round(zHeart + zHead) % 4 ];
       if (lastLandmarks) {
@@ -1068,29 +1185,32 @@ document.addEventListener('DOMContentLoaded', function () {
       setSel('life',  ['wide','double','close','broken'][ Math.floor(zLife / 240) % 4 ]);
       setSel('fate',  ['deep','fromlife','none','broken'][ Math.floor(zFate / 200) % 4 ]);
 
+      const handLabel = detectedHandSide === 'L' ? 'มือซ้าย' : 'มือขวา';
       if (pq) {
         pq.innerHTML = avgLum < 65
-          ? '<span class="mid">⚠️ ภาพค่อนข้างมืด แต่ AI หน้าบ้านเลือกเส้นเบื้องต้นให้แล้ว</span>'
-          : '<span class="good">🤖 AI สแกนเส้นลายมือเบื้องต้นเรียบร้อย!</span>';
+          ? `<span class="mid">⚠️ ตรวจพบ <b>${handLabel}</b> (ภาพค่อนข้างมืด แต่เลือกเส้นเบื้องต้นให้แล้ว)</span>`
+          : `<span class="good">🤖 AI ตรวจพบ <b>${handLabel}</b> และสแกนเส้นลายมือให้เรียบร้อยแล้ว!</span>`;
       }
 
-      // แสดงผลคำทำนายทันทีจาก On-Device AI (ยังไม่สั่ง save ซ้ำซ้อน)
       readPalm(false);
 
-      // ขั้นที่ 2: หากเปิด Hybrid Cloud ส่งต่อไปให้ GAS วิเคราะห์และบันทึก
       if (CLOUD_ENABLED && GAS_URL) {
         if (pq) pq.innerHTML += ' <span class="muted">(กำลังซิงค์ Cloud AI...)</span>';
         const res = await postToGAS({ action: 'analyzePalm', imageBase64: lastBase64 });
         if (res && res.status === 'success' && res.data) {
           const ai = res.data;
+          if (ai.hand === 'L' || ai.hand === 'R') {
+            detectedHandSide = ai.hand;
+            if (handSel) handSel.value = ai.hand;
+          }
           setSel('shape', ai.shape);
           setSel('heart', ai.heart);
           setSel('head', ai.head);
           setSel('life', ai.life);
           setSel('fate', ai.fate);
-          if (pq) pq.innerHTML = `<span class="good">✨ Hybrid AI วิเคราะห์สำเร็จ: ${esc(ai.aiNote || 'อัปเดตเส้นลายมือตาม Cloud AI แล้ว')}</span>`;
+          const finalHandLabel = (handSel && handSel.value === 'L') ? 'มือซ้าย' : 'มือขวา';
+          if (pq) pq.innerHTML = `<span class="good">✨ Hybrid AI วิเคราะห์ <b>${finalHandLabel}</b> สำเร็จ: ${esc(ai.aiNote || 'อัปเดตเส้นลายมือตาม Cloud AI แล้ว')}</span>`;
         }
-        // บันทึกผลลัพธ์สุดท้ายลง Google Sheets
         readPalm(true);
       }
     } catch (e) {
@@ -1101,6 +1221,7 @@ document.addEventListener('DOMContentLoaded', function () {
   function deletePalm(){
     if (palmURL){ URL.revokeObjectURL(palmURL); palmURL = null; }
     lastBase64 = '';
+    detectedHandSide = null;
     const img = $('#palmImg'), prev = $('#palmPreview'), pq = $('#palmQ');
     if(img) img.removeAttribute('src');
     if(prev) prev.hidden = true;
