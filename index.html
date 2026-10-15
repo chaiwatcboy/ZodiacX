@@ -256,7 +256,7 @@ footer{text-align:center;color:var(--muted);font-size:.85rem;padding:20px 16px 4
       </div>
       <img id="shareImg" class="share-img" alt="ภาพสรุปดวงสำหรับแชร์" hidden>
       <canvas id="shareCanvas" hidden></canvas>
-      <p class="muted" style="text-align:center">บนมือถือ กดค้างที่รูปเพื่อบันทึกได้เช่นกัน</p>
+      <p class="muted" style="text-align:center">บนคอมพิวเตอร์ กดปุ่มบันทึกรูปด้านล่างได้เลย</p>
       <div class="btn-row" style="justify-content:center">
         <button type="button" class="btn" id="shImg">📲 แชร์รูป</button>
         <button type="button" class="btn ghost" id="shSave">⬇️ บันทึกรูป</button>
@@ -278,796 +278,833 @@ footer{text-align:center;color:var(--muted);font-size:.85rem;padding:20px 16px 4
 </footer>
 
 <script>
-/* ================= แถบแจ้งข้อผิดพลาด ================= */
-window.addEventListener('error', function (e) {
-  var bar = document.getElementById('errBar');
-  if (!bar) { bar = document.createElement('div'); bar.id = 'errBar'; bar.className = 'err-bar'; document.body.appendChild(bar); }
-  bar.textContent = '⚠️ เกิดข้อผิดพลาด: ' + (e.message || 'ไม่ทราบสาเหตุ') + ' — แนะนำเปิดผ่าน Chrome หรือ Safari โดยตรง';
-});
-
-/* ================= ตัวช่วย ================= */
-const $ = s => document.querySelector(s);
-const on = (sel, ev, fn) => { const el = $(sel); if (el) el.addEventListener(ev, fn); };
-const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const mod = (a, n) => ((a % n) + n) % n;
-const scrollTop = () => { try { window.scrollTo({top: 0, behavior: 'smooth'}); } catch (e) { window.scrollTo(0, 0); } };
-
-const store = (() => {
-  try { const t = '__t'; localStorage.setItem(t, '1'); localStorage.removeItem(t); return localStorage; }
-  catch (e) {
-    const mem = {};
-    return { getItem: k => (k in mem ? mem[k] : null), setItem: (k, v) => { mem[k] = String(v); }, removeItem: k => { delete mem[k]; } };
-  }
-})();
-
-let camStream = null, camFacing = 'environment', palmURL = null, shareReady = false, shareFile = null;
-
-/* ================= ข้อมูลพื้นฐาน ================= */
-const DAYS = ['อาทิตย์','จันทร์','อังคาร','พุธ','พฤหัสบดี','ศุกร์','เสาร์'];
-const TMONTH = ['อ้าย','ยี่','สาม','สี่','ห้า','หก','เจ็ด','แปด','เก้า','สิบ','สิบเอ็ด','สิบสอง'];
-
-const TAKSA = [
-  {n:'อาทิตย์', c:'แดง', h:'#e53935', L:'สระทั้งหมด (อ ะ า ิ ี ุ ู เ แ โ ใ ไ ฯลฯ)', chars:'อะาำิีึืุูเแโใไัฤฦ'},
-  {n:'จันทร์', c:'เหลือง/ครีม', h:'#fdd835', L:'ก ข ฃ ค ฅ ฆ ง', chars:'กขฃคฅฆง'},
-  {n:'อังคาร', c:'ชมพู', h:'#f48fb1', L:'จ ฉ ช ซ ฌ ญ', chars:'จฉชซฌญ'},
-  {n:'พุธ', c:'เขียว', h:'#43a047', L:'ฎ ฏ ฐ ฑ ฒ ณ', chars:'ฎฏฐฑฒณ'},
-  {n:'เสาร์', c:'ม่วง/ดำ', h:'#7b1fa2', L:'ด ต ถ ท ธ น', chars:'ดตถทธน'},
-  {n:'พฤหัสบดี', c:'ส้ม/แสด', h:'#fb8c00', L:'บ ป ผ ฝ พ ฟ ภ ม', chars:'บปผฝพฟภม'},
-  {n:'ราหู (พุธกลางคืน)', c:'เทา/ดำ', h:'#616161', L:'ย ร ล ว', chars:'ยรลว'},
-  {n:'ศุกร์', c:'ฟ้า/น้ำเงิน', h:'#42a5f5', L:'ศ ษ ส ห ฬ ฮ', chars:'ศษสหฬฮ'}
-];
-const DAY2T = [0,1,2,3,5,7,4];
-const POS = [
-  {n:'บริวาร', m:'คนรอบตัว ลูกน้อง ครอบครัว'},
-  {n:'อายุ', m:'สุขภาพ ความเป็นอยู่'},
-  {n:'เดช', m:'อำนาจ ชื่อเสียง การงาน'},
-  {n:'ศรี', m:'โชคลาภ การเงิน เสน่ห์'},
-  {n:'มูละ', m:'หลักทรัพย์ มรดก ความมั่นคง'},
-  {n:'อุตสาหะ', m:'ความขยัน ความสำเร็จจากความพยายาม'},
-  {n:'มนตรี', m:'ผู้ใหญ่อุปถัมภ์ ผู้สนับสนุน'},
-  {n:'กาลกิณี', m:'สิ่งอัปมงคล ควรหลีกเลี่ยง'}
-];
-const taksaRing = t => POS.map((p, i) => Object.assign({}, p, {pl: TAKSA[(t + i) % 8]}));
-
-const ANIMAL = [
-  ['ชวด','หนู','🐀','ฉลาด ไหวพริบดี ประหยัด เก็บเงินเก่ง'],
-  ['ฉลู','วัว','🐂','ขยัน อดทน ซื่อสัตย์ หนักแน่น'],
-  ['ขาล','เสือ','🐅','กล้าหาญ มีอำนาจ รักอิสระ'],
-  ['เถาะ','กระต่าย','🐇','อ่อนโยน มีศิลปะ รักความสงบ'],
-  ['มะโรง','มังกร (งูใหญ่)','🐉','มีพลัง ทะเยอทะยาน โดดเด่น'],
-  ['มะเส็ง','งูเล็ก','🐍','ฉลาดลึกซึ้ง มีเสน่ห์ รอบคอบ'],
-  ['มะเมีย','ม้า','🐎','กระตือรือร้น ร่าเริง รักอิสระ'],
-  ['มะแม','แพะ','🐐','ใจดี อ่อนโยน มีความคิดสร้างสรรค์'],
-  ['วอก','ลิง','🐒','หัวไว ตลก เจ้าไอเดีย'],
-  ['ระกา','ไก่','🐓','ขยัน ตรงไปตรงมา ละเอียด'],
-  ['จอ','สุนัข','🐕','ซื่อสัตย์ จริงใจ รักความยุติธรรม'],
-  ['กุน','หมู','🐖','ใจกว้าง จริงใจ ใช้ชีวิตสบายๆ']
-];
-
-const ZOD = [
-  ['เมษ','♈','ไฟ','กล้าหาญ ใจร้อน เป็นผู้นำ ชอบความท้าทายและการเริ่มต้นสิ่งใหม่'],
-  ['พฤษภ','♉','ดิน','หนักแน่น อดทน รักความสบาย ให้ความสำคัญกับความมั่นคง'],
-  ['เมถุน','♊','ลม','ช่างพูด ฉลาด ปรับตัวเก่ง อยากรู้อยากเห็น'],
-  ['กรกฎ','♋','น้ำ','อ่อนไหว รักครอบครัว ใส่ใจคนรอบข้าง'],
-  ['สิงห์','♌','ไฟ','มั่นใจ ใจกว้าง มีออร่า ชอบเป็นจุดสนใจ'],
-  ['กันย์','♍','ดิน','ละเอียด รอบคอบ ช่างวิเคราะห์ ทำงานเป็นระบบ'],
-  ['ตุลย์','♎','ลม','รักความยุติธรรม มีศิลปะ เข้าสังคมเก่ง'],
-  ['พิจิก','♏','น้ำ','ลึกลับ มุ่งมั่น รักจริงเกลียดจริง'],
-  ['ธนู','♐','ไฟ','รักอิสระ มองโลกในแง่ดี ชอบเดินทางและเรียนรู้'],
-  ['มังกร','♑','ดิน','รับผิดชอบสูง ทะเยอทะยาน อดทน'],
-  ['กุมภ์','♒','ลม','คิดนอกกรอบ เป็นตัวของตัวเอง รักเพื่อน'],
-  ['มีน','♓','น้ำ','จินตนาการสูง เห็นอกเห็นใจ อ่อนโยน']
-];
-const TROP = [[3,21],[4,20],[5,21],[6,21],[7,23],[8,23],[9,23],[10,23],[11,22],[12,22],[1,20],[2,19]];
-const SID  = [[4,13],[5,14],[6,15],[7,16],[8,17],[9,17],[10,17],[11,16],[12,16],[1,14],[2,13],[3,14]];
-function sign(m, d, starts){
-  const v = m*100 + d; let best = -1, bv = -1, maxI = 0, maxV = -1;
-  starts.forEach((s, i) => { const sv = s[0]*100 + s[1];
-    if (sv <= v && sv > bv){ bv = sv; best = i; }
-    if (sv > maxV){ maxV = sv; maxI = i; } });
-  return best < 0 ? maxI : best;
-}
-
-/* ================= สุ่มแบบคงที่รายวัน ================= */
-function hash(s){ let h = 2166136261; for (const c of s){ h ^= c.codePointAt(0); h = Math.imul(h, 16777619); } return h >>> 0; }
-function rng(seed){ let a = hash(seed); return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
-
-const DAILY = {
-  'ความรัก':['ความรักมีเรื่องให้ต้องใจเย็น พูดน้อยฟังมากจะดีกว่า','ความรักทรงตัว ใส่ใจเรื่องเล็กๆ จะช่วยให้ความสัมพันธ์ดีขึ้น','เสน่ห์แรง คนโสดมีลุ้นเจอคนถูกใจ คนมีคู่หวานชื่น'],
-  'การงาน':['งานอาจมีอุปสรรค ตรวจทานรายละเอียดให้ดีก่อนส่ง','งานเดินหน้าได้ตามแผน ค่อยเป็นค่อยไป','งานเด่น มีโอกาสแสดงฝีมือ ผู้ใหญ่เห็นผลงาน'],
-  'การเงิน':['ระวังรายจ่ายไม่คาดคิด งดซื้อของตามอารมณ์','การเงินพอตัว ควรวางแผนเก็บออมเพิ่ม','การเงินคล่องมือ มีรายได้จากความตั้งใจทำงาน'],
-  'สุขภาพ':['พักผ่อนให้เพียงพอ ระวังอาการอ่อนเพลีย','สุขภาพโดยรวมดี ควรออกกำลังกายเบาๆ','ร่างกายสดชื่น กระปรี้กระเปร่า']
-};
-const TIMES = ['06:00–09:00','09:00–12:00','12:00–15:00','15:00–18:00','18:00–21:00'];
-const DIRS = ['เหนือ','ตะวันออกเฉียงเหนือ','ตะวันออก','ตะวันออกเฉียงใต้','ใต้','ตะวันตกเฉียงใต้','ตะวันตก','ตะวันตกเฉียงเหนือ'];
-function dailyHTML(zi){
-  const r = rng(new Date().toDateString() + '|' + zi);
-  let h = '<div class="tbl-wrap"><table><tr><th>ด้าน</th><th>คะแนน</th><th>คำทำนาย</th></tr>';
-  for (const k in DAILY){
-    const s = 1 + Math.floor(r()*5), lv = s <= 2 ? 0 : s === 3 ? 1 : 2;
-    h += `<tr><td>${k}</td><td class="rate">${'★'.repeat(s)}${'☆'.repeat(5-s)}</td><td style="text-align:left">${DAILY[k][lv]}</td></tr>`;
-  }
-  return h + `</table></div><p>⏰ ช่วงเวลาดี: <b>${TIMES[Math.floor(r()*TIMES.length)]}</b> · 🧭 ทิศมงคล: <b>${DIRS[Math.floor(r()*8)]}</b></p>`;
-}
-
-/* ================= โปรไฟล์ ================= */
-const KEY = 'horaProfile';
-let P = null;
-try { P = JSON.parse(store.getItem(KEY) || 'null'); } catch (e) { P = null; }
-
-function info(p){
-  const [y, m, d] = p.birth.split('-').map(Number);
-  let dow = new Date(y, m-1, d).getDay();
-  const hh = p.time ? +p.time.split(':')[0] : null;
-  if (hh !== null && hh < 6) dow = mod(dow - 1, 7);
-  const rahu = dow === 3 && hh !== null && hh >= 18;
-  return {y, m, d, dow, rahu, t: rahu ? 6 : DAY2T[dow]};
-}
-const need = () => `<div class="card need"><p>กรุณากรอกวันเกิดที่หน้าแรกก่อน</p><button type="button" class="btn" data-goto="home">ไปกรอกข้อมูล</button></div>`;
-const sw = pl => `<span class="sw" style="background:${pl.h}"></span>${pl.c}`;
-const formMsg = (t, cls) => { $('#formMsg').innerHTML = t ? `<span class="${cls || 'good'}">${t}</span>` : ''; };
-
-/* ================= หน้าแรก ================= */
-function renderToday(){
-  const now = new Date(), dw = now.getDay(), ring = taksaRing(DAY2T[dw]);
-  const g = k => ring.find(r => r.n === k).pl;
-  let h = `<h2>ดวงวันนี้ · วัน${DAYS[dw]}ที่ ${now.toLocaleDateString('th-TH',{day:'numeric',month:'long',year:'numeric'})}</h2>
-  <div class="grid">
-    <div><b>สีเสริมการงาน (เดช)</b><br>${sw(g('เดช'))}</div>
-    <div><b>สีเสริมการเงิน (ศรี)</b><br>${sw(g('ศรี'))}</div>
-    <div><b>สีผู้ใหญ่เมตตา (มนตรี)</b><br>${sw(g('มนตรี'))}</div>
-    <div><b>สีควรเลี่ยง (กาลกิณี)</b><br><span class="bad">${sw(g('กาลกิณี'))}</span></div>
-  </div>`;
-  if (P){
-    const b = info(P), zi = sign(b.m, b.d, SID);
-    h += `<h3>ดวงวันนี้ของ${P.name ? 'คุณ' + esc(P.name) : 'คุณ'} · ${ZOD[zi][1]} ราศี${ZOD[zi][0]}</h3>` + dailyHTML(zi)
-      + `<div class="btn-row" style="margin-top:16px"><button type="button" class="btn small" data-goto="share">📤 สร้างการ์ดแชร์ดวงวันนี้</button></div>`;
-  } else h += `<p class="muted" style="margin-top:12px">กรอกวันเกิดด้านล่างเพื่อดูดวงส่วนตัวของคุณ</p>`;
-  $('#todayCard').innerHTML = h;
-}
-
-/* ================= เลข 7 ตัว 9 ฐาน ================= */
-const PHOP = [['อัตตะ','ตัวตน สุขภาพ'],['หินะ','อุปสรรค ศัตรู'],['ธนัง','การเงิน รายได้'],['ปิตา','ผู้ใหญ่ เจ้านาย'],['มาตา','ญาติ บ้าน'],['โภคา','ทรัพย์สิน'],['มัชฌิมา','คู่ครอง หุ้นส่วน']];
-const row = s => Array.from({length:7}, (_, i) => mod(s - 1 + i, 7) + 1);
-
-function renderSeven(){
-  if (!P) { $('#sevenOut').innerHTML = need(); return; }
-  const b = info(P);
-  
-  // ฐานที่ 1-3 (วัน, เดือน, ปี)
-  const r1 = row(b.dow + 1);
-  const r2 = row(mod(P.month - 1, 7) + 1);
-  const r3 = row(mod(P.year, 7) + 1);
-  
-  // ฐานที่ 4 (ฐานรวม)
-  const r4 = r1.map((v, i) => v + r2[i] + r3[i]);
-  
-  // ฐานที่ 5-7 (ฐานชิ่ง: นำฐานก่อนหน้ามาบวกกันแล้วหาร 7 เอาเศษ ถ้าลงตัวได้ 7)
-  const calcChing = (prev) => prev.map(v => { let mod7 = v % 7; return mod7 === 0 ? 7 : mod7; });
-  const r5 = calcChing(r4);
-  const r6 = calcChing(r5);
-  const r7 = calcChing(r6);
-  
-  // ฐานที่ 8 (ฐานพระเคราะห์ / ดาวเสวยอายุ)
-  const r8 = r4.map(v => ((v * 3) % 7) + 1);
-  
-  // ฐานที่ 9 (ฐานกำลังพระเคราะห์)
-  const powers = [6, 15, 8, 17, 19, 21, 10]; // กำลังดาว 1-7
-  const r9 = r4.map(v => powers[(v - 1) % 7]);
-
-  const allRows = [
-    ['ฐานที่ 1 (วันเกิด)', r1, `วัน${DAYS[b.dow]}`],
-    ['ฐานที่ 2 (เดือนเกิด)', r2, `เดือน${TMONTH[P.month - 1]}`],
-    ['ฐานที่ 3 (ปีเกิด)', r3, `ปี${ANIMAL[P.year][0]}`],
-    ['ฐานที่ 4 (ฐานรวม)', r4, 'ผลรวม วัน+เดือน+ปี'],
-    ['ฐานที่ 5 (ฐานชิ่ง 1)', r5, 'ฐานที่ 4 แปลงเศษ 7'],
-    ['ฐานที่ 6 (ฐานชิ่ง 2)', r6, 'ฐานที่ 5 แปลงเศษ 7'],
-    ['ฐานที่ 7 (ฐานชิ่ง 3)', r7, 'ฐานที่ 6 แปลงเศษ 7'],
-    ['ฐานที่ 8 (ฐานพระเคราะห์)', r8, 'เกณฑ์ดาวเสวยอายุ'],
-    ['ฐานที่ 9 (กำลังพระเคราะห์)', r9, 'พลังงานดาวประจำภพ']
-  ];
-
-  let h = `<div class="card"><div class="tbl-wrap"><table><tr><th>ฐาน / ภพ</th>${PHOP.map(p => `<th>${p[0]}</th>`).join('')}</tr>`;
-  allRows.forEach((r, idx) => {
-    const isBold = idx === 3 || idx === 7;
-    h += `<tr${isBold ? ' style="background:rgba(245,201,106,.05)"' : ''}><td><b>${r[0]}</b><br><span class="muted">${r[2]}</span></td>${r[1].map(v => `<td${isBold ? ' class="big" style="font-size:1.05rem"' : ''}>${v}</td>`).join('')}</tr>`;
+document.addEventListener('DOMContentLoaded', function () {
+  /* ================= แถบแจ้งข้อผิดพลาด ================= */
+  window.addEventListener('error', function (e) {
+    var bar = document.getElementById('errBar');
+    if (!bar) { bar = document.createElement('div'); bar.id = 'errBar'; bar.className = 'err-bar'; document.body.appendChild(bar); }
+    bar.textContent = '⚠️ เกิดข้อผิดพลาด: ' + (e.message || 'ไม่ทราบสาเหตุ');
   });
-  h += `</table></div><p class="muted" style="margin-top:12px">คำนวณครบ 9 ฐานตามตำราเลข 7 ตัว 9 ฐานโบราณ · ฐานที่ 4 และ 8 บ่งบอกถึงความมั่นคงและดาวเสวยอายุในภพต่างๆ</p></div>`;
 
-  h += `<div class="card"><h3>คำทำนายภพสำคัญ (จากฐานรวม)</h3>`;
-  PHOP.forEach((p, i) => {
-    const v = r4[i], lv = v >= 15 ? 2 : v >= 10 ? 1 : 0;
-    let cls, txt;
-    if (i === 1){
-      cls = ['good','mid','bad'][lv];
-      txt = ['ชีวิตราบรื่น อุปสรรคน้อย','มีอุปสรรคตามวาระ แก้ไขได้','เจออุปสรรคบ่อย ฝึกให้แกร่งขึ้น'][lv];
-    } else {
-      cls = ['bad','mid','good'][lv];
-      txt = [`ต้องใส่ใจเป็นพิเศษเรื่อง${p[1]}`,`ปานกลาง เรื่อง${p[1]} ทรงตัวตามความพยายาม`,`โดดเด่นมาก เป็นจุดแข็งเรื่อง${p[1]}`][lv];
+  /* ================= ตัวช่วย ================= */
+  const $ = s => document.querySelector(s);
+  const on = (sel, ev, fn) => { const el = $(sel); if (el) el.addEventListener(ev, fn); };
+  const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const mod = (a, n) => ((a % n) + n) % n;
+  const scrollTop = () => { try { window.scrollTo({top: 0, behavior: 'smooth'}); } catch (e) { window.scrollTo(0, 0); } };
+
+  const store = (() => {
+    try { const t = '__t'; localStorage.setItem(t, '1'); localStorage.removeItem(t); return localStorage; }
+    catch (e) {
+      const mem = {};
+      return { getItem: k => (k in mem ? mem[k] : null), setItem: (k, v) => { mem[k] = String(v); }, removeItem: k => { delete mem[k]; } };
     }
-    h += `<p><b>${p[0]}</b> <span class="pill">ผลรวม ${v}</span> <span class="${cls}">${txt}</span></p>`;
-  });
-  $('#sevenOut').innerHTML = h + '</div>';
-}
+  })();
 
-/* ================= ทักษา & ชื่อ ================= */
-function renderTaksa(){
-  if (!P) { $('#taksaOut').innerHTML = need(); return; }
-  const b = info(P), ring = taksaRing(b.t), born = TAKSA[b.t];
-  let h = `<div class="card"><div class="muted">คุณเกิดวัน</div><div class="big">${born.n}</div>
-  <p>สีประจำวันเกิด: ${sw(born)}</p><div class="tbl-wrap"><table>
-  <tr><th>ตำแหน่ง</th><th>ดาว</th><th>สี</th><th>อักษร</th><th>ความหมาย</th></tr>`;
-  ring.forEach(r => { h += `<tr${r.n === 'กาลกิณี' ? ' class="bad"' : ''}><td>${r.n}</td><td>${r.pl.n}</td><td>${sw(r.pl)}</td><td>${r.pl.L}</td><td style="text-align:left">${r.m}</td></tr>`; });
-  h += `</table></div></div>
-  <div class="card"><h3>ตรวจอักษรกาลกิณีในชื่อ</h3>
-  <input id="nameChk" value="${esc(P.name || '')}" placeholder="พิมพ์ชื่อหรือนามสกุล">
-  <button type="button" class="btn" id="nameBtn">ตรวจชื่อ</button><div id="nameOut" style="margin-top:10px"></div></div>`;
-  $('#taksaOut').innerHTML = h;
-  on('#nameBtn', 'click', () => checkName(ring));
-  if (P.name) checkName(ring);
-}
-function checkName(ring){
-  const n = $('#nameChk').value.trim();
-  if (!n) { $('#nameOut').innerHTML = '<p class="muted">พิมพ์ชื่อเพื่อตรวจ</p>'; return; }
-  const find = pl => [...new Set([...n].filter(c => pl.chars.includes(c)))];
-  const bad = find(ring[7].pl), sri = find(ring[3].pl), det = find(ring[2].pl);
-  let h = bad.length
-    ? `<p class="bad">⚠️ พบอักษรกาลกิณี: <b>${bad.join(' ')}</b> — ตามตำราควรหลีกเลี่ยง</p>`
-    : `<p class="good">✅ ชื่อ “${esc(n)}” ไม่มีอักษรกาลกิณี</p>`;
-  if (sri.length) h += `<p class="good">💰 มีอักษรศรี (เสริมโชคลาภ): <b>${sri.join(' ')}</b></p>`;
-  if (det.length) h += `<p class="good">👑 มีอักษรเดช (เสริมอำนาจ): <b>${det.join(' ')}</b></p>`;
-  $('#nameOut').innerHTML = h;
-}
+  let camStream = null, camFacing = 'environment', palmURL = null, shareReady = false, shareFile = null;
 
-/* ================= 12 ราศี ================= */
-const zCard = (t, i) => `<div class="card"><div class="muted">${t}</div><div class="big">${ZOD[i][1]} ราศี${ZOD[i][0]}</div><span class="pill">ธาตุ${ZOD[i][2]}</span><p>${ZOD[i][3]}</p></div>`;
-function renderZodiac(){
-  if (!P) $('#zodiacOut').innerHTML = `<p class="muted">กรอกวันเกิดที่หน้าแรกเพื่อดูราศีของคุณ หรือเลือกราศีด้านล่างได้เลย</p>`;
-  else {
-    const b = info(P), s = sign(b.m, b.d, SID), t = sign(b.m, b.d, TROP);
-    $('#zodiacOut').innerHTML = `<div class="grid">${zCard('ราศีแบบไทย (ดาราคติ)', s)}${zCard('ราศีแบบตะวันตก (Tropical)', t)}</div>`;
-    $('#zSel').value = s;
-  }
-  renderDaily();
-}
-function renderDaily(){ $('#zDaily').innerHTML = dailyHTML(+$('#zSel').value || 0); }
+  /* ================= ข้อมูลพื้นฐาน ================= */
+  const DAYS = ['อาทิตย์','จันทร์','อังคาร','พุธ','พฤหัสบดี','ศุกร์','เสาร์'];
+  const TMONTH = ['อ้าย','ยี่','สาม','สี่','ห้า','หก','เจ็ด','แปด','เก้า','สิบ','สิบเอ็ด','สิบสอง'];
 
-/* ================= เลขศาสตร์ ================= */
-const NUM = {1:'ผู้นำ มุ่งมั่น เป็นตัวของตัวเอง กล้าบุกเบิก',2:'นักประสาน อ่อนโยน ทำงานร่วมกับคนอื่นเก่ง',3:'นักสื่อสาร ร่าเริง มีความคิดสร้างสรรค์',4:'นักสร้าง มีระเบียบ ขยัน มั่นคง',5:'นักผจญภัย รักอิสระ ปรับตัวเก่ง',6:'ผู้ดูแล รักครอบครัว มีความรับผิดชอบ',7:'นักคิด ชอบค้นหาความจริง ลึกซึ้ง',8:'นักบริหาร มุ่งความสำเร็จ เก่งเรื่องเงิน',9:'ผู้ให้ มีเมตตา มองภาพกว้าง',11:'ผู้มีญาณหยั่งรู้ สร้างแรงบันดาลใจ (Master Number)',22:'ผู้สร้างการใหญ่ เปลี่ยนความฝันเป็นจริง (Master Number)',33:'ครูผู้ให้ เมตตาสูง (Master Number)'};
-const PYEAR = {1:'ปีแห่งการเริ่มต้น เหมาะเริ่มสิ่งใหม่',2:'ปีแห่งความร่วมมือและความสัมพันธ์ ใจเย็นเข้าไว้',3:'ปีแห่งการสื่อสาร สร้างสรรค์ เข้าสังคม',4:'ปีแห่งการวางรากฐาน ทำงานหนักแต่คุ้มค่า',5:'ปีแห่งการเปลี่ยนแปลงและการเดินทาง',6:'ปีแห่งครอบครัวและความรับผิดชอบ',7:'ปีแห่งการทบทวน เรียนรู้ พัฒนาจิตใจ',8:'ปีแห่งความสำเร็จ การเงิน และอำนาจ',9:'ปีแห่งการปิดฉาก ปล่อยวาง เตรียมเริ่มรอบใหม่'};
-const dsum = s => [...String(s)].reduce((a, c) => a + Number(c), 0);
-function reduce(n, master = true){ while (n > 9 && !(master && [11,22,33].includes(n))) n = dsum(n); return n; }
-function renderNum(){
-  if (!P) { $('#numOut').innerHTML = need(); return; }
-  const b = info(P), lp = reduce(dsum(`${b.y}${b.m}${b.d}`)), bd = reduce(b.d);
-  const cy = new Date().getFullYear(), py = reduce(dsum(`${cy}${b.m}${b.d}`), false);
-  $('#numOut').innerHTML = `<div class="grid">
-    <div class="card"><div class="muted">เลขเส้นทางชีวิต (Life Path)</div><div class="big">${lp}</div><p>${NUM[lp]}</p></div>
-    <div class="card"><div class="muted">เลขวันเกิด</div><div class="big">${bd}</div><p>${NUM[bd]}</p></div>
-    <div class="card"><div class="muted">เลขประจำปี ${cy} ของคุณ</div><div class="big">${py}</div><p>${PYEAR[py]}</p></div>
-  </div>`;
-}
-
-/* ================= นักษัตรจีน ================= */
-const ELEM = ['ทอง (โลหะ)','ทอง (โลหะ)','น้ำ','น้ำ','ไม้','ไม้','ไฟ','ไฟ','ดิน','ดิน'];
-const cnYear = (y, m, d) => (m < 2 || (m === 2 && d < 4)) ? y - 1 : y;
-function renderChinese(){
-  if (!P) { $('#chineseOut').innerHTML = need(); return; }
-  const b = info(P), cy = cnYear(b.y, b.m, b.d), a = mod(cy - 4, 12), A = ANIMAL[a];
-  const now = new Date(), ny = cnYear(now.getFullYear(), now.getMonth() + 1, now.getDate()), na = mod(ny - 4, 12);
-  let st, cls;
-  if (a === na){ st = 'ปีชงตัวเอง (ปีนักษัตรเดียวกับปีนี้)'; cls = 'bad'; }
-  else if (a === mod(na + 6, 12)){ st = 'ชงตรง — ควรระมัดระวังเป็นพิเศษ'; cls = 'bad'; }
-  else if (a === mod(na + 3, 12) || a === mod(na + 9, 12)){ st = 'ได้รับผลกระทบบางส่วน'; cls = 'mid'; }
-  else { st = 'ไม่ชง ดวงค่อนข้างราบรื่น'; cls = 'good'; }
-  const trio = [a % 4, a % 4 + 4, a % 4 + 8].filter(i => i !== a).map(i => `${ANIMAL[i][2]} ${ANIMAL[i][0]}`).join(', ');
-  const cl = ANIMAL[mod(a + 6, 12)];
-  $('#chineseOut').innerHTML = `<div class="grid">
-    <div class="card"><div class="muted">ปีเกิดของคุณ</div><div class="big">${A[2]} ปี${A[0]} (${A[1]})</div>
-      <span class="pill">ธาตุ${ELEM[mod(cy, 10)]}</span><span class="pill">${cy % 2 === 0 ? 'หยาง' : 'หยิน'}</span><p>${A[3]}</p></div>
-    <div class="card"><div class="muted">ปีนี้ ปี${ANIMAL[na][0]} ${ANIMAL[na][2]}</div><p class="${cls}" style="font-size:1.1rem"><b>${st}</b></p>
-      <p>🤝 เข้ากันดี (สามประสาน): ${trio}</p><p>⚡ ปีที่ชงกับคุณ: ${cl[2]} ${cl[0]}</p></div>
-  </div><p class="muted">* นับปีนักษัตรจีนตามหลักลี่ชุน (เริ่มปีใหม่ประมาณ 4 กุมภาพันธ์)</p>`;
-}
-
-/* ================= ไพ่ทาโรต์ ================= */
-const TAROT = [
-  ['0','The Fool','คนโง่','🃏','การเริ่มต้นใหม่ ความกล้า อิสระ','ประมาท ตัดสินใจหุนหันพลันแล่น'],
-  ['I','The Magician','นักมายากล','✨','ความสามารถพร้อม ได้เวลาลงมือทำ','ใช้ความสามารถผิดทาง ขาดสมาธิ'],
-  ['II','The High Priestess','สตรีนักบวช','🌙','สัญชาตญาณ ความลับ ปัญญาภายใน','ไม่ฟังเสียงตัวเอง มีเรื่องปิดบัง'],
-  ['III','The Empress','จักรพรรดินี','🌾','ความอุดมสมบูรณ์ ความรัก การดูแล','พึ่งพาคนอื่นมากไป ขาดความคิดสร้างสรรค์'],
-  ['IV','The Emperor','จักรพรรดิ','👑','อำนาจ ความมั่นคง ระเบียบ','ดื้อรั้น ใช้อำนาจมากเกินไป'],
-  ['V','The Hierophant','พระสังฆราช','📜','ประเพณี ผู้ใหญ่ การเรียนรู้','ฝืนกรอบ ไม่ทำตามธรรมเนียม'],
-  ['VI','The Lovers','คนรัก','💞','ความรัก การเลือก ความลงตัว','ความไม่ลงรอย ตัดสินใจผิด'],
-  ['VII','The Chariot','รถศึก','🏇','ชัยชนะ ความมุ่งมั่น','ขาดทิศทาง ควบคุมสถานการณ์ไม่ได้'],
-  ['VIII','Strength','พลัง','🦁','ความกล้าหาญ อดทน ใจเย็น','ขาดความมั่นใจ อารมณ์ร้อน'],
-  ['IX','The Hermit','ฤๅษี','🏮','ใคร่ครวญ แสวงหาความหมาย','โดดเดี่ยว ปลีกตัวมากเกินไป'],
-  ['X','Wheel of Fortune','กงล้อแห่งโชคชะตา','☸️','จุดเปลี่ยน โชคดีกำลังมา','โชคไม่เข้าข้าง อย่าฝืนกระแส'],
-  ['XI','Justice','ความยุติธรรม','⚖️','ความถูกต้อง เหตุและผล','ความไม่ยุติธรรม หลีกเลี่ยงความรับผิดชอบ'],
-  ['XII','The Hanged Man','คนแขวน','🙃','หยุดรอ มองมุมใหม่ เสียสละ','ติดขัด ลังเล'],
-  ['XIII','Death','ความตาย','🦋','การสิ้นสุดเพื่อเริ่มต้นใหม่','ไม่ยอมปล่อยวางสิ่งเก่า'],
-  ['XIV','Temperance','ความพอดี','🍷','สมดุล ความอดทน','เกินพอดี ขาดสมดุล'],
-  ['XV','The Devil','ปีศาจ','⛓️','พันธนาการ กิเลส การติดยึด','หลุดพ้น ได้ปลดปล่อย'],
-  ['XVI','The Tower','หอคอย','🗼','เปลี่ยนแปลงกะทันหัน สิ่งเก่าพังทลาย','รอดจากเหตุร้าย เปลี่ยนแปลงจากภายใน'],
-  ['XVII','The Star','ดวงดาว','⭐','ความหวัง แรงบันดาลใจ การเยียวยา','หมดหวัง ขาดศรัทธาในตัวเอง'],
-  ['XVIII','The Moon','ดวงจันทร์','🌕','ความไม่ชัดเจน ความกังวล ภาพลวง','ความจริงปรากฏ คลายความสับสน'],
-  ['XIX','The Sun','ดวงอาทิตย์','☀️','ความสุข ความสำเร็จ','ความสุขลดลงชั่วคราว'],
-  ['XX','Judgement','การพิพากษา','📯','การตื่นรู้ โอกาสครั้งใหม่','ลังเล โทษตัวเอง'],
-  ['XXI','The World','โลก','🌍','ความสำเร็จสมบูรณ์ จบภารกิจ','งานยังไม่เสร็จ ขาดอีกนิดเดียว']
-];
-function drawTarot(){
-  const deck = TAROT.map((_, i) => i);
-  for (let i = deck.length - 1; i > 0; i--){ const j = Math.floor(Math.random()*(i+1)); [deck[i], deck[j]] = [deck[j], deck[i]]; }
-  const picks = deck.slice(0, 3).map(i => ({c: TAROT[i], rev: Math.random() < .3}));
-  const PN = ['อดีต','ปัจจุบัน','อนาคต'], q = $('#tQ').value.trim();
-  $('#tarotOut').innerHTML = `${q ? `<p class="muted">คำถาม: “${esc(q)}”</p>` : ''}<div class="spread">${picks.map((p, i) => `
-    <div><div class="tc${p.rev ? ' rev' : ''}" id="tc${i}"><div class="in">
-      <div class="b">✦</div>
-      <div class="f"><div class="rn">${p.c[0]}</div><div class="sym">${p.c[3]}</div><div class="nm">${p.c[2]}</div><div class="rn">${p.c[1]}${p.rev ? '<br>(กลับหัว)' : ''}</div></div>
-    </div></div><div class="pos">${PN[i]}</div></div>`).join('')}</div><div class="card" id="tMean" hidden></div>`;
-  picks.forEach((_, i) => setTimeout(() => { const el = $('#tc' + i); if (el) el.classList.add('flip'); }, 400 + i*600));
-  setTimeout(() => {
-    const m = $('#tMean'); if (!m) return; m.hidden = false;
-    m.innerHTML = '<h3>คำทำนาย</h3>' + picks.map((p, i) => `<p><b>${PN[i]} — ${p.c[2]} (${p.c[1]})${p.rev ? ' กลับหัว' : ''}:</b> ${p.rev ? p.c[5] : p.c[4]}</p>`).join('')
-      + '<p class="muted">ไพ่ช่วยสะท้อนมุมมองต่อสถานการณ์ การตัดสินใจสุดท้ายอยู่ที่ตัวคุณเสมอ</p>';
-  }, 2500);
-}
-
-/* ================= ทำนายฝัน ================= */
-const DREAM = [
-  {n:'งู', k:['งู'], th:'เนื้อคู่หรือคู่ครองกำลังเข้ามา ถ้างูรัดตัวมักหมายถึงจะได้พบคู่', psy:'พลังชีวิต การเปลี่ยนแปลง หรือความกลัวที่ซ่อนอยู่'},
-  {n:'ฟันหลุด/ฟันหัก', k:['ฟัน'], th:'ญาติผู้ใหญ่อาจเจ็บป่วย ควรใส่ใจสุขภาพคนในบ้าน', psy:'ความกังวลเรื่องภาพลักษณ์ หรือรู้สึกสูญเสียการควบคุม'},
-  {n:'ช้าง', k:['ช้าง'], th:'ผู้ใหญ่ให้การอุปถัมภ์ มียศตำแหน่งสูงขึ้น', psy:'ความมั่นคง ความหนักแน่น ความทรงจำ'},
-  {n:'น้ำ/ทะเล', k:['น้ำ','ทะเล'], th:'น้ำใสหมายถึงโชคดี น้ำขุ่นหมายถึงอุปสรรค', psy:'อารมณ์และจิตใต้สำนึก ความสงบหรือความวุ่นวายในใจ'},
-  {n:'ความตาย/ศพ', k:['ตาย','ศพ'], th:'ฝันร้ายกลายเป็นดี อายุยืน มีโชค', psy:'การจบช่วงชีวิตหนึ่งเพื่อเริ่มต้นใหม่'},
-  {n:'ไฟ/ไฟไหม้', k:['ไฟ'], th:'จะมีความรุ่งเรือง มีลาภ', psy:'ความหลงใหล ความโกรธ หรือพลังที่อัดอั้น'},
-  {n:'เงิน/ทอง', k:['เงิน','ทอง'], th:'มีโชคลาภ แต่ควรระวังการใช้จ่าย', psy:'การให้คุณค่าในตัวเองและความมั่นคง'},
-  {n:'การบิน', k:['บิน','ลอย'], th:'จะประสบความสำเร็จ ได้เลื่อนขั้น', psy:'ความปรารถนาอิสระ อยากหลุดจากข้อจำกัด'},
-  {n:'ตกจากที่สูง', k:['ตกจาก','ตกลงมา','ตกตึก','ตกที่สูง','ร่วงลง'], th:'ระวังอุปสรรค ตัดสินใจเรื่องสำคัญให้รอบคอบ', psy:'ความไม่มั่นคง กลัวความล้มเหลว'},
-  {n:'ถูกไล่ล่า', k:['ไล่','วิ่งหนี','หนี'], th:'มีปัญหาที่ต้องเผชิญ ไม่ควรหลีกเลี่ยง', psy:'สิ่งที่คุณกำลังหลบเลี่ยงในชีวิตจริง'},
-  {n:'พระ/วัด', k:[/พระ(?!จันทร์|อาทิตย์)/,'วัด'], th:'บุญกุศลและสิ่งศักดิ์สิทธิ์คุ้มครอง', psy:'ความต้องการความสงบและที่พึ่งทางใจ'},
-  {n:'เด็ก/ทารก', k:['เด็ก','ทารก'], th:'มีข่าวดี การเริ่มต้นใหม่', psy:'ด้านที่ใสซื่อในตัวเอง หรือโปรเจกต์ใหม่'},
-  {n:'แต่งงาน', k:['แต่งงาน'], th:'จะมีการเปลี่ยนแปลงสำคัญในชีวิต', psy:'การผสานสองด้านของตัวเองเข้าด้วยกัน'},
-  {n:'ตั้งครรภ์', k:['ตั้งครรภ์','ตั้งท้อง','ท้องโต'], th:'มีโชค มีงานใหม่หรือรายได้ใหม่', psy:'ความคิดสร้างสรรค์ที่กำลังก่อตัว'},
-  {n:'ปลา', k:[/ปลา(?!ย)/], th:'ลาภผล ความอุดมสมบูรณ์', psy:'ความคิดที่ผุดขึ้นจากจิตใต้สำนึก'},
-  {n:'สุนัข', k:['หมา','สุนัข'], th:'มิตรภาพที่ดี แต่ถ้าถูกกัดให้ระวังคนใกล้ตัว', psy:'ความภักดี ความไว้ใจ'},
-  {n:'แมว', k:['แมว'], th:'ระวังคนเจ้าเล่ห์ หรือมีเสน่ห์ดึงดูด', psy:'สัญชาตญาณ ความเป็นอิสระ'},
-  {n:'เสือ', k:['เสือ'], th:'จะมีอำนาจ ได้ผู้ใหญ่หนุน หรืออาจมีคู่แข่ง', psy:'พลังภายในและความกล้า'},
-  {n:'จระเข้', k:['จระเข้'], th:'ระวังศัตรูแฝงหรือคนไม่หวังดี', psy:'อันตรายที่ซ่อนอยู่ใต้ผิวน้ำ'},
-  {n:'ผี', k:[/ผี(?!เสื้อ)/], th:'มีเรื่องค้างคาใจ ควรทำบุญอุทิศส่วนกุศล', psy:'ความรู้สึกผิดหรืออดีตที่ยังไม่ปล่อย'},
-  {n:'เลือด', k:['เลือด'], th:'ตามตำราไทยถือว่าจะมีโชคลาภ', psy:'พลังชีวิต หรือความเหนื่อยล้าทางอารมณ์'},
-  {n:'บ้าน', k:['บ้าน'], th:'ความมั่นคงในครอบครัว', psy:'ตัวตนของคุณ แต่ละห้องคือแต่ละด้านของชีวิต'},
-  {n:'รถ', k:['รถ'], th:'การเดินทาง หรือการเปลี่ยนทิศทางชีวิต', psy:'ความรู้สึกว่าควบคุมชีวิตได้มากน้อยแค่ไหน'},
-  {n:'แฟนเก่า', k:['แฟนเก่า'], th:'ยังมีเรื่องค้างใจ หรือจะมีข่าวจากคนเก่า', psy:'บทเรียนจากความสัมพันธ์เดิม'},
-  {n:'ร้องไห้', k:['ร้องไห้'], th:'จะมีเรื่องดีเข้ามา', psy:'การระบายอารมณ์ที่เก็บไว้'},
-  {n:'ฝน', k:['ฝน'], th:'ความชุ่มชื่น โชคดีกำลังมา', psy:'การชำระล้าง เริ่มต้นใหม่'},
-  {n:'ดอกไม้', k:['ดอกไม้'], th:'ความรัก เสน่ห์ มีคนชื่นชม', psy:'ความงามและการเติบโตทางใจ'},
-  {n:'นก', k:['นก'], th:'จะได้รับข่าวสารดี', psy:'อิสระและความหวัง'},
-  {n:'กุญแจ', k:['กุญแจ'], th:'พบทางออกของปัญหา', psy:'โอกาสหรือความลับที่กำลังเปิดออก'},
-  {n:'การสอบ', k:['สอบ'], th:'จะมีบททดสอบในชีวิต', psy:'ความกังวลเรื่องการถูกประเมิน'},
-  {n:'ผม', k:['ผมร่วง','ตัดผม','ผมหงอก'], th:'ผมร่วงระวังเสียทรัพย์ ตัดผมหมายถึงตัดสิ่งเก่าออก', psy:'ความกังวลเรื่องภาพลักษณ์และพลังชีวิต'},
-  {n:'แหวน', k:['แหวน'], th:'มีคู่ครอง หรือคำมั่นสัญญา', psy:'พันธะและความผูกพัน'},
-  {n:'พญานาค', k:['นาค'], th:'สิ่งศักดิ์สิทธิ์คุ้มครอง จะมีโชคใหญ่', psy:'พลังที่ยิ่งใหญ่และการปกป้อง'},
-  {n:'เต่า', k:['เต่า'], th:'อายุยืน ความมั่นคง', psy:'ความอดทน ค่อยเป็นค่อยไป'},
-  {n:'ลิง', k:['ลิง'], th:'ระวังคนพูดมากหรือคนซุกซนรอบตัว', psy:'ความคิดที่ฟุ้งซ่าน'},
-  {n:'ภูเขา', k:['ภูเขา','ภูผา'], th:'จะบรรลุเป้าหมายใหญ่', psy:'อุปสรรคหรือความทะเยอทะยาน'},
-  {n:'ฟ้าผ่า', k:['ฟ้าผ่า'], th:'จะมีการเปลี่ยนแปลงกะทันหัน', psy:'การตระหนักรู้แบบฉับพลัน'},
-  {n:'ไข่', k:['ไข่'], th:'การเริ่มต้นใหม่ มีโอกาสดี', psy:'ศักยภาพที่รอการฟักตัว'},
-  {n:'กอด/จูบ', k:['กอด','จูบ'], th:'ความรักกำลังมา ความสัมพันธ์แน่นแฟ้น', psy:'ความต้องการความใกล้ชิดและการยอมรับ'}
-];
-function readDream(){
-  const t = $('#dText').value.trim();
-  if (!t) { $('#dreamOut').innerHTML = '<p class="muted">กรุณาเล่าความฝันก่อน</p>'; return; }
-  const hits = DREAM.filter(e => e.k.some(k => k instanceof RegExp ? k.test(t) : t.includes(k)));
-  $('#dreamOut').innerHTML = hits.length
-    ? `<p class="muted">พบสัญลักษณ์ในฝัน ${hits.length} อย่าง</p>` + hits.map(e => `<div class="card"><h3>🔹 ${e.n}</h3><p><b>ตำราไทย:</b> ${e.th}</p><p><b>มุมมองจิตวิทยา:</b> ${e.psy}</p></div>`).join('')
-    : `<div class="card"><p>ยังไม่พบสัญลักษณ์ที่ตรงกับตำราในระบบ ลองเล่าโดยระบุสิ่งที่เห็นให้ชัดขึ้น เช่น สัตว์ คน สถานที่ หรือสิ่งของ</p><p class="muted">ในทางจิตวิทยา ความฝันมักสะท้อนความรู้สึกและเรื่องที่ค้างใจในช่วงนี้</p></div>`;
-}
-
-/* ================= ดูลายมือ: ข้อมูล ================= */
-const PALM = {
-  shape:{t:'รูปทรงมือ', o:{
-    earth:['ธาตุดิน — ฝ่ามือเหลี่ยม นิ้วสั้น','ติดดิน ทำงานจริงจัง เชื่อถือได้ ชอบงานที่จับต้องได้'],
-    air:['ธาตุลม — ฝ่ามือเหลี่ยม นิ้วยาว','ช่างคิด สื่อสารเก่ง อยากรู้อยากเห็น แต่อาจคิดมาก'],
-    fire:['ธาตุไฟ — ฝ่ามือยาว นิ้วสั้น','กระตือรือร้น กล้าตัดสินใจ พลังสูง แต่ใจร้อน'],
-    water:['ธาตุน้ำ — ฝ่ามือยาว นิ้วยาว','อ่อนไหว มีจินตนาการ มีศิลปะ เห็นอกเห็นใจผู้อื่น']}},
-  heart:{t:'เส้นหัวใจ (เส้นบนสุด สีชมพู)', o:{
-    curve:['โค้งขึ้น จบระหว่างนิ้วชี้กับนิ้วกลาง','รักอบอุ่น แสดงออกเปิดเผย ให้ความสำคัญกับคนรัก'],
-    straight:['ตรงยาวพาดฝ่ามือ','รักมั่นคง ใช้เหตุผลในความรัก อาจเก็บความรู้สึก'],
-    short:['สั้น จบใต้นิ้วกลาง','ให้ความสำคัญกับอิสระ ไม่ชอบความรักที่ผูกมัดเกินไป'],
-    branch:['มีกิ่งแตกที่ปลาย','มีเสน่ห์ มีคนเข้ามาให้เลือก ความรักหลากมิติ']}},
-  head:{t:'เส้นสมอง (เส้นกลาง สีฟ้า)', o:{
-    straight:['ตรงยาว','คิดเป็นระบบ มีเหตุผล เหมาะกับงานวิเคราะห์'],
-    curve:['โค้งลงสู่ฐานมือ','สร้างสรรค์ จินตนาการสูง เหมาะกับงานศิลปะ'],
-    short:['สั้น','ตัดสินใจเร็ว ชอบลงมือมากกว่าวางแผนนาน'],
-    sep:['เริ่มห่างจากเส้นชีวิต','กล้าคิดกล้าทำ เป็นตัวของตัวเองตั้งแต่อายุน้อย']}},
-  life:{t:'เส้นชีวิต (โค้งรอบนิ้วโป้ง สีเขียว)', o:{
-    wide:['ยาว โค้งกว้าง','พลังชีวิตดี กระตือรือร้น ชอบเข้าสังคม'],
-    close:['โค้งชิดนิ้วโป้ง','ระมัดระวัง ชอบความสงบ ควรเติมพลังด้วยการออกกำลังกาย'],
-    double:['มีเส้นคู่ขนาน','มีคนคอยสนับสนุน ฟื้นตัวจากปัญหาได้ดี'],
-    broken:['ขาดเป็นช่วง','มีจุดเปลี่ยนสำคัญ เช่น ย้ายที่อยู่หรือเปลี่ยนวิถีชีวิต (ไม่ได้หมายถึงอายุสั้น)']}},
-  fate:{t:'เส้นวาสนา (แนวตั้งกลางฝ่ามือ สีทอง)', o:{
-    deep:['ชัดและลึก','เป้าหมายชีวิตชัดเจน การงานมั่นคง'],
-    fromlife:['เริ่มจากเส้นชีวิต','สร้างเนื้อสร้างตัวได้ด้วยตัวเอง'],
-    none:['ไม่มีหรือเห็นไม่ชัด','ชีวิตยืดหยุ่น ไม่ยึดติดเส้นทางเดียว'],
-    broken:['ขาดหลายช่วง','การงานมีหลายช่วงเปลี่ยนผ่าน แต่ละครั้งพาไปสู่สิ่งใหม่']}}
-};
-function buildPalm(){
-  $('#palmForm').innerHTML = Object.keys(PALM).map(k => {
-    const g = PALM[k];
-    return `<div><label for="pm_${k}">${g.t}</label><select id="pm_${k}">${Object.keys(g.o).map(v => `<option value="${v}">${g.o[v][0]}</option>`).join('')}</select></div>`;
-  }).join('');
-}
-function readPalm(){
-  const hand = $('#pm_hand').value === 'L' ? 'มือซ้าย (พื้นดวงแต่กำเนิด)' : 'มือขวา (สิ่งที่สร้างขึ้นเองในปัจจุบัน)';
-  const img = !$('#palmPreview').hidden && $('#palmImg').src ? `<img src="${$('#palmImg').src}" class="palm-img" style="max-height:220px" alt="ฝ่ามือ">` : '';
-  $('#palmOut').innerHTML = `<div class="card"><h3>ผลการอ่านลายมือ · ${hand}</h3>${img}` + Object.keys(PALM).map(k => {
-    const g = PALM[k], o = g.o[$('#pm_' + k).value];
-    return `<p><b>${g.t}:</b> <span class="pill">${o[0]}</span><br>${o[1]}</p>`;
-  }).join('') + '<p class="muted">ลายมือเปลี่ยนแปลงได้ตามการใช้ชีวิต ใช้เป็นแนวทางทำความรู้จักตัวเองเท่านั้น</p></div>';
-  $('#palmOut').scrollIntoView({behavior: 'smooth', block: 'start'});
-}
-
-/* ================= ดูลายมือ: กล้อง & รูปภาพ ================= */
-const camMsg = h => { $('#camMsg').innerHTML = h || ''; };
-const canLiveCam = () => !!(window.isSecureContext && navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
-
-function stopCam(){
-  if (camStream){ camStream.getTracks().forEach(t => t.stop()); camStream = null; }
-  const v = $('#camVideo'); if (v) v.srcObject = null;
-  const box = $('#camBox'); if (box) box.hidden = true;
-}
-async function startCam(){
-  stopCam();
-  camMsg('กำลังเปิดกล้อง... (ถ้ามีหน้าต่างขออนุญาต กรุณากด “อนุญาต”)');
-  try {
-    camStream = await navigator.mediaDevices.getUserMedia({
-      video: {facingMode: {ideal: camFacing}, width: {ideal: 1920}, height: {ideal: 1080}}, audio: false
-    });
-    const v = $('#camVideo');
-    v.srcObject = camStream;
-    v.classList.toggle('mirror', camFacing === 'user');
-    $('#camBox').hidden = false;
-    try { await v.play(); } catch (e) {}
-    camMsg('');
-    $('#camBox').scrollIntoView({behavior: 'smooth', block: 'center'});
-  } catch (err) {
-    stopCam();
-    const name = err && err.name;
-    const why = name === 'NotAllowedError' ? 'คุณยังไม่อนุญาตให้เว็บใช้กล้อง (เปิดสิทธิ์ได้ที่ไอคอนแม่กุญแจข้างแถบที่อยู่เว็บ)'
-      : name === 'NotFoundError' ? 'ไม่พบกล้องในอุปกรณ์นี้'
-      : name === 'NotReadableError' ? 'กล้องกำลังถูกใช้งานโดยแอปอื่น'
-      : 'เปิดกล้องในหน้าเว็บไม่ได้';
-    camMsg(`<span class="mid">${why}</span><br><label for="fileCamera" class="btn ghost small" style="margin-top:8px">📷 ใช้แอปกล้องของเครื่องแทน</label>`);
-  }
-}
-function openCamera(){
-  if (canLiveCam()) startCam();
-  else $('#fileCamera').click();
-}
-function takeShot(){
-  const v = $('#camVideo');
-  if (!v.videoWidth) { camMsg('<span class="mid">กล้องยังไม่พร้อม ลองอีกครั้ง</span>'); return; }
-  const c = $('#camCanvas');
-  c.width = v.videoWidth; c.height = v.videoHeight;
-  const x = c.getContext('2d');
-  if (camFacing === 'user'){ x.translate(c.width, 0); x.scale(-1, 1); }
-  x.drawImage(v, 0, 0, c.width, c.height);
-  const url = c.toDataURL('image/jpeg', 0.92);
-  stopCam();
-  setPalmImage(url, false);
-}
-function setPalmImage(src, isBlobURL){
-  if (palmURL){ URL.revokeObjectURL(palmURL); palmURL = null; }
-  if (isBlobURL) palmURL = src;
-  const img = $('#palmImg');
-  img.onload = () => checkQuality(img);
-  img.onerror = () => { $('#palmQ').innerHTML = '<span class="bad">เปิดรูปนี้ไม่ได้ ลองเลือกรูปอื่น (แนะนำไฟล์ JPG หรือ PNG)</span>'; };
-  img.src = src;
-  $('#palmPreview').hidden = false;
-  camMsg('');
-  setTimeout(() => $('#palmPreview').scrollIntoView({behavior: 'smooth', block: 'center'}), 100);
-}
-function handleFile(e){
-  const f = e.target.files && e.target.files[0];
-  if (!f) return;
-  if (f.type && !/^image\//.test(f.type)) { camMsg('<span class="bad">ไฟล์นี้ไม่ใช่รูปภาพ</span>'); return; }
-  stopCam();
-  setPalmImage(URL.createObjectURL(f), true);
-  e.target.value = '';
-}
-function checkQuality(img){
-  try {
-    const c = document.createElement('canvas'); c.width = c.height = 48;
-    const x = c.getContext('2d'); x.drawImage(img, 0, 0, 48, 48);
-    const d = x.getImageData(0, 0, 48, 48).data; let s = 0;
-    for (let i = 0; i < d.length; i += 4) s += 0.299*d[i] + 0.587*d[i+1] + 0.114*d[i+2];
-    const avg = s / (d.length / 4);
-    $('#palmQ').innerHTML = avg < 70 ? '<span class="mid">⚠️ รูปค่อนข้างมืด เส้นมืออาจไม่ชัด ลองถ่ายในที่สว่างขึ้น</span>'
-      : avg > 215 ? '<span class="mid">⚠️ รูปสว่างจ้าเกินไป ลองหลบแสงตรงหรือปิดแฟลช</span>'
-      : '<span class="good">✅ แสงพอดี ดูรูปแล้วเลือกลักษณะเส้นด้านล่างได้เลย</span>';
-  } catch (e) { $('#palmQ').textContent = ''; }
-}
-function deletePalm(){
-  if (palmURL){ URL.revokeObjectURL(palmURL); palmURL = null; }
-  $('#palmImg').removeAttribute('src');
-  $('#palmPreview').hidden = true;
-  $('#palmQ').textContent = '';
-}
-
-/* ================= แชร์ดวง ================= */
-let shareFmt = 'story';
-const FONT_H = "'Prompt', sans-serif", FONT_B = "'Sarabun', sans-serif";
-const shareMsg = (t, cls) => { $('#shareMsg').innerHTML = t ? `<span class="${cls || 'good'}">${t}</span>` : ''; };
-const siteURL = () => /^https?:$/.test(location.protocol) ? location.href.split('#')[0] : '';
-const starStr = n => '★'.repeat(n) + '☆'.repeat(5 - n);
-
-function shareData(){
-  const b = info(P), now = new Date(), dw = now.getDay();
-  const ring = taksaRing(DAY2T[dw]), g = k => ring.find(r => r.n === k).pl;
-  const zi = sign(b.m, b.d, SID);
-  const r = rng(now.toDateString() + '|' + zi);
-  const stars = Object.keys(DAILY).map(k => [k, 1 + Math.floor(r() * 5)]);
-  const time = TIMES[Math.floor(r() * TIMES.length)], dir = DIRS[Math.floor(r() * 8)];
-  const cy = cnYear(b.y, b.m, b.d);
-  const avg = stars.reduce((s, x) => s + x[1], 0) / stars.length;
-  return {
-    name: P.name, dayName: DAYS[dw],
-    date: now.toLocaleDateString('th-TH', {day: 'numeric', month: 'long', year: 'numeric'}),
-    zod: ZOD[zi], born: TAKSA[b.t], lp: reduce(dsum(`${b.y}${b.m}${b.d}`)), animal: ANIMAL[mod(cy - 4, 12)],
-    stars, time, dir,
-    colors: [['งาน', g('เดช')], ['เงิน', g('ศรี')], ['ผู้ใหญ่', g('มนตรี')], ['ควรเลี่ยง', g('กาลกิณี')]],
-    mood: avg >= 4 ? 'วันนี้ดวงพุ่ง! 🚀' : avg >= 3 ? 'วันนี้ดวงดี ไปได้สวย ✨' : avg >= 2 ? 'วันนี้ดวงกลางๆ ใจเย็นไว้ 🍀' : 'วันนี้ค่อยๆ ไป ระวังนิดนึง 🙏'
-  };
-}
-
-function rrect(c, x, y, w, h, r){
-  c.beginPath(); c.moveTo(x + r, y);
-  c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r);
-  c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath();
-}
-function panel(c, x, y, w, h){
-  c.fillStyle = 'rgba(255,255,255,.07)'; rrect(c, x, y, w, h, 26); c.fill();
-  c.strokeStyle = 'rgba(255,255,255,.15)'; c.lineWidth = 2; c.stroke();
-}
-function fitText(c, t, maxW, size, weight, fam){
-  do { c.font = `${weight} ${size}px ${fam}`; size -= 2; } while (c.measureText(t).width > maxW && size > 14);
-}
-
-async function drawShare(){
-  if (!P){ $('#shareNeed').innerHTML = need(); $('#shareBox').hidden = true; shareReady = false; return false; }
-  $('#shareNeed').innerHTML = ''; $('#shareBox').hidden = false;
-  try { await Promise.all([document.fonts.load(`600 40px ${FONT_H}`), document.fonts.load(`400 40px ${FONT_B}`)]); } catch (e) {}
-
-  const d = shareData(), W = 1080, H = shareFmt === 'story' ? 1920 : 1350;
-  const cv = $('#shareCanvas'); cv.width = W; cv.height = H;
-  const c = cv.getContext('2d');
-
-  const bg = c.createRadialGradient(W / 2, 0, 50, W / 2, H * 0.4, H);
-  bg.addColorStop(0, '#3a1d70'); bg.addColorStop(1, '#0d0820');
-  c.fillStyle = bg; c.fillRect(0, 0, W, H);
-  const sr = rng('stars' + H);
-  for (let i = 0; i < 140; i++){
-    c.globalAlpha = 0.2 + sr() * 0.6; c.fillStyle = '#fff';
-    c.beginPath(); c.arc(sr() * W, sr() * H, sr() * 2.2 + 0.4, 0, Math.PI * 2); c.fill();
-  }
-  c.globalAlpha = 1;
-  c.strokeStyle = 'rgba(245,201,106,.5)'; c.lineWidth = 3; rrect(c, 24, 24, W - 48, H - 48, 36); c.stroke();
-
-  let y = (H - 1260) / 2;
-  c.textAlign = 'center';
-
-  c.fillStyle = '#f5c96a'; c.font = `600 58px ${FONT_H}`; c.fillText('✨ โหราจักรวาล ✨', W / 2, y + 58);
-  c.fillStyle = '#a99fc9'; c.font = `400 34px ${FONT_B}`; c.fillText(`ดวงประจำวัน${d.dayName}ที่ ${d.date}`, W / 2, y + 112);
-  const who = d.name ? `คุณ${d.name}` : 'ดวงของฉัน';
-  c.fillStyle = '#ffffff'; fitText(c, who, W - 160, 66, 600, FONT_H); c.fillText(who, W / 2, y + 195);
-  c.fillStyle = '#f5c96a'; fitText(c, d.mood, W - 160, 42, 600, FONT_H); c.fillText(d.mood, W / 2, y + 268);
-  y += 300;
-
-  const cells = [
-    ['ราศี (แบบไทย)', `${d.zod[1]} ${d.zod[0]}`],
-    ['เกิดวัน', d.born.n],
-    ['เลขเส้นทางชีวิต', `เลข ${d.lp}`],
-    ['ปีนักษัตร', `${d.animal[2]} ปี${d.animal[0]}`]
+  const TAKSA = [
+    {n:'อาทิตย์', c:'แดง', h:'#e53935', L:'สระทั้งหมด (อ ะ า ิ ี ุ ู เ แ โ ใ ไ ฯลฯ)', chars:'อะาำิีึืุูเแโใไัฤฦ'},
+    {n:'จันทร์', c:'เหลือง/ครีม', h:'#fdd835', L:'ก ข ฃ ค ฅ ฆ ง', chars:'กขฃคฅฆง'},
+    {n:'อังคาร', c:'ชมพู', h:'#f48fb1', L:'จ ฉ ช ซ ฌ ญ', chars:'จฉชซฌญ'},
+    {n:'พุธ', c:'เขียว', h:'#43a047', L:'ฎ ฏ ฐ ฑ ฒ ณ', chars:'ฎฏฐฑฒณ'},
+    {n:'เสาร์', c:'ม่วง/ดำ', h:'#7b1fa2', L:'ด ต ถ ท ธ น', chars:'ดตถทธน'},
+    {n:'พฤหัสบดี', c:'ส้ม/แสด', h:'#fb8c00', L:'บ ป ผ ฝ พ ฟ ภ ม', chars:'บปผฝพฟภม'},
+    {n:'ราหู (พุธกลางคืน)', c:'เทา/ดำ', h:'#616161', L:'ย ร ล ว', chars:'ยรลว'},
+    {n:'ศุกร์', c:'ฟ้า/น้ำเงิน', h:'#42a5f5', L:'ศ ษ ส ห ฬ ฮ', chars:'ศษสหฬฮ'}
   ];
-  const cw = 465, ch = 140;
-  cells.forEach((cell, i) => {
-    const x = 60 + (i % 2) * (cw + 30), yy = y + Math.floor(i / 2) * (ch + 20);
-    panel(c, x, yy, cw, ch);
+  const DAY2T = [0,1,2,3,5,7,4];
+  const POS = [
+    {n:'บริวาร', m:'คนรอบตัว ลูกน้อง ครอบครัว'},
+    {n:'อายุ', m:'สุขภาพ ความเป็นอยู่'},
+    {n:'เดช', m:'อำนาจ ชื่อเสียง การงาน'},
+    {n:'ศรี', m:'โชคลาภ การเงิน เสน่ห์'},
+    {n:'มูละ', m:'หลักทรัพย์ มรดก ความมั่นคง'},
+    {n:'อุตสาหะ', m:'ความขยัน ความสำเร็จจากความพยายาม'},
+    {n:'มนตรี', m:'ผู้ใหญ่อุปถัมภ์ ผู้สนับสนุน'},
+    {n:'กาลกิณี', m:'สิ่งอัปมงคล ควรหลีกเลี่ยง'}
+  ];
+  const taksaRing = t => POS.map((p, i) => Object.assign({}, p, {pl: TAKSA[(t + i) % 8]}));
+
+  const ANIMAL = [
+    ['ชวด','หนู','🐀','ฉลาด ไหวพริบดี ประหยัด เก็บเงินเก่ง'],
+    ['ฉลู','วัว','🐂','ขยัน อดทน ซื่อสัตย์ หนักแน่น'],
+    ['ขาล','เสือ','🐅','กล้าหาญ มีอำนาจ รักอิสระ'],
+    ['เถาะ','กระต่าย','🐇','อ่อนโยน มีศิลปะ รักความสงบ'],
+    ['มะโรง','มังกร (งูใหญ่)','🐉','มีพลัง ทะเยอทะยาน โดดเด่น'],
+    ['มะเส็ง','งูเล็ก','🐍','ฉลาดลึกซึ้ง มีเสน่ห์ รอบคอบ'],
+    ['มะเมีย','ม้า','🐎','กระตือรือร้น ร่าเริง รักอิสระ'],
+    ['มะแม','แพะ','🐐','ใจดี อ่อนโยน มีความคิดสร้างสรรค์'],
+    ['วอก','ลิง','🐒','หัวไว ตลก เจ้าไอเดีย'],
+    ['ระกา','ไก่','🐓','ขยัน ตรงไปตรงมา ละเอียด'],
+    ['จอ','สุนัข','🐕','ซื่อสัตย์ จริงใจ รักความยุติธรรม'],
+    ['กุน','หมู','🐖','ใจกว้าง จริงใจ ใช้ชีวิตสบายๆ']
+  ];
+
+  const ZOD = [
+    ['เมษ','♈','ไฟ','กล้าหาญ ใจร้อน เป็นผู้นำ ชอบความท้าทายและการเริ่มต้นสิ่งใหม่'],
+    ['พฤษภ','♉','ดิน','หนักแน่น อดทน รักความสบาย ให้ความสำคัญกับความมั่นคง'],
+    ['เมถุน','♊','ลม','ช่างพูด ฉลาด ปรับตัวเก่ง อยากรู้อยากเห็น'],
+    ['กรกฎ','♋','น้ำ','อ่อนไหว รักครอบครัว ใส่ใจคนรอบข้าง'],
+    ['สิงห์','♌','ไฟ','มั่นใจ ใจกว้าง มีออร่า ชอบเป็นจุดสนใจ'],
+    ['กันย์','♍','ดิน','ละเอียด รอบคอบ ช่างวิเคราะห์ ทำงานเป็นระบบ'],
+    ['ตุลย์','♎','ลม','รักความยุติธรรม มีศิลปะ เข้าสังคมเก่ง'],
+    ['พิจิก','♏','น้ำ','ลึกลับ มุ่งมั่น รักจริงเกลียดจริง'],
+    ['ธนู','♐','ไฟ','รักอิสระ มองโลกในแง่ดี ชอบเดินทางและเรียนรู้'],
+    ['มังกร','♑','ดิน','รับผิดชอบสูง ทะเยอทะยาน อดทน'],
+    ['กุมภ์','♒','ลม','คิดนอกกรอบ เป็นตัวของตัวเอง รักเพื่อน'],
+    ['มีน','♓','น้ำ','จินตนาการสูง เห็นอกเห็นใจ อ่อนโยน']
+  ];
+  const TROP = [[3,21],[4,20],[5,21],[6,21],[7,23],[8,23],[9,23],[10,23],[11,22],[12,22],[1,20],[2,19]];
+  const SID  = [[4,13],[5,14],[6,15],[7,16],[8,17],[9,17],[10,17],[11,16],[12,16],[1,14],[2,13],[3,14]];
+  function sign(m, d, starts){
+    const v = m*100 + d; let best = -1, bv = -1, maxI = 0, maxV = -1;
+    starts.forEach((s, i) => { const sv = s[0]*100 + s[1];
+      if (sv <= v && sv > bv){ bv = sv; best = i; }
+      if (sv > maxV){ maxV = sv; maxI = i; } });
+    return best < 0 ? maxI : best;
+  }
+
+  /* ================= สุ่มแบบคงที่รายวัน ================= */
+  function hash(s){ let h = 2166136261; for (const c of s){ h ^= c.codePointAt(0); h = Math.imul(h, 16777619); } return h >>> 0; }
+  function rng(seed){ let a = hash(seed); return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+
+  const DAILY = {
+    'ความรัก':['ความรักมีเรื่องให้ต้องใจเย็น พูดน้อยฟังมากจะดีกว่า','ความรักทรงตัว ใส่ใจเรื่องเล็กๆ จะช่วยให้ความสัมพันธ์ดีขึ้น','เสน่ห์แรง คนโสดมีลุ้นเจอคนถูกใจ คนมีคู่หวานชื่น'],
+    'การงาน':['งานอาจมีอุปสรรค ตรวจทานรายละเอียดให้ดีก่อนส่ง','งานเดินหน้าได้ตามแผน ค่อยเป็นค่อยไป','งานเด่น มีโอกาสแสดงฝีมือ ผู้ใหญ่เห็นผลงาน'],
+    'การเงิน':['ระวังรายจ่ายไม่คาดคิด งดซื้อของตามอารมณ์','การเงินพอตัว ควรวางแผนเก็บออมเพิ่ม','การเงินคล่องมือ มีรายได้จากความตั้งใจทำงาน'],
+    'สุขภาพ':['พักผ่อนให้เพียงพอ ระวังอาการอ่อนเพลีย','สุขภาพโดยรวมดี ควรออกกำลังกายเบาๆ','ร่างกายสดชื่น กระปรี้กระเปร่า']
+  };
+  const TIMES = ['06:00–09:00','09:00–12:00','12:00–15:00','15:00–18:00','18:00–21:00'];
+  const DIRS = ['เหนือ','ตะวันออกเฉียงเหนือ','ตะวันออก','ตะวันออกเฉียงใต้','ใต้','ตะวันตกเฉียงใต้','ตะวันตก','ตะวันตกเฉียงเหนือ'];
+  function dailyHTML(zi){
+    const r = rng(new Date().toDateString() + '|' + zi);
+    let h = '<div class="tbl-wrap"><table><tr><th>ด้าน</th><th>คะแนน</th><th>คำทำนาย</th></tr>';
+    for (const k in DAILY){
+      const s = 1 + Math.floor(r()*5), lv = s <= 2 ? 0 : s === 3 ? 1 : 2;
+      h += `<tr><td>${k}</td><td class="rate">${'★'.repeat(s)}${'☆'.repeat(5-s)}</td><td style="text-align:left">${DAILY[k][lv]}</td></tr>`;
+    }
+    return h + `</table></div><p>⏰ ช่วงเวลาดี: <b>${TIMES[Math.floor(r()*TIMES.length)]}</b> · 🧭 ทิศมงคล: <b>${DIRS[Math.floor(r()*8)]}</b></p>`;
+  }
+
+  /* ================= โปรไฟล์ ================= */
+  let P = null;
+  try { P = JSON.parse(store.getItem(KEY) || 'null'); } catch (e) { P = null; }
+
+  function info(p){
+    const [y, m, d] = p.birth.split('-').map(Number);
+    let dow = new Date(y, m-1, d).getDay();
+    const hh = p.time ? +p.time.split(':')[0] : null;
+    if (hh !== null && hh < 6) dow = mod(dow - 1, 7);
+    const rahu = dow === 3 && hh !== null && hh >= 18;
+    return {y, m, d, dow, rahu, t: rahu ? 6 : DAY2T[dow]};
+  }
+  const need = () => `<div class="card need"><p>กรุณากรอกวันเกิดที่หน้าแรกก่อน</p><button type="button" class="btn" data-goto="home">ไปกรอกข้อมูล</button></div>`;
+  const sw = pl => `<span class="sw" style="background:${pl.h}"></span>${pl.c}`;
+  const formMsg = (t, cls) => { const el = $('#formMsg'); if(el) el.innerHTML = t ? `<span class="${cls || 'good'}">${t}</span>` : ''; };
+
+  /* ================= หน้าแรก ================= */
+  function renderToday(){
+    const now = new Date(), dw = now.getDay(), ring = taksaRing(DAY2T[dw]);
+    const g = k => ring.find(r => r.n === k).pl;
+    let h = `<h2>ดวงวันนี้ · วัน${DAYS[dw]}ที่ ${now.toLocaleDateString('th-TH',{day:'numeric',month:'long',year:'numeric'})}</h2>
+    <div class="grid">
+      <div><b>สีเสริมการงาน (เดช)</b><br>${sw(g('เดช'))}</div>
+      <div><b>สีเสริมการเงิน (ศรี)</b><br>${sw(g('ศรี'))}</div>
+      <div><b>สีผู้ใหญ่เมตตา (มนตรี)</b><br>${sw(g('มนตรี'))}</div>
+      <div><b>สีควรเลี่ยง (กาลกิณี)</b><br><span class="bad">${sw(g('กาลกิณี'))}</span></div>
+    </div>`;
+    if (P){
+      const b = info(P), zi = sign(b.m, b.d, SID);
+      h += `<h3>ดวงวันนี้ของ${P.name ? 'คุณ' + esc(P.name) : 'คุณ'} · ${ZOD[zi][1]} ราศี${ZOD[zi][0]}</h3>` + dailyHTML(zi)
+        + `<div class="btn-row" style="margin-top:16px"><button type="button" class="btn small" data-goto="share">📤 สร้างการ์ดแชร์ดวงวันนี้</button></div>`;
+    } else h += `<p class="muted" style="margin-top:12px">กรอกวันเกิดด้านล่างเพื่อดูดวงส่วนตัวของคุณ</p>`;
+    const el = $('#todayCard'); if(el) el.innerHTML = h;
+  }
+
+  /* ================= เลข 7 ตัว 9 ฐาน ================= */
+  const PHOP = [['อัตตะ','ตัวตน สุขภาพ'],['หินะ','อุปสรรค ศัตรู'],['ธนัง','การเงิน รายได้'],['ปิตา','ผู้ใหญ่ เจ้านาย'],['มาตา','ญาติ บ้าน'],['โภคา','ทรัพย์สิน'],['มัชฌิมา','คู่ครอง หุ้นส่วน']];
+  const row = s => Array.from({length:7}, (_, i) => mod(s - 1 + i, 7) + 1);
+
+  function renderSeven(){
+    const out = $('#sevenOut'); if(!out) return;
+    if (!P) { out.innerHTML = need(); return; }
+    const b = info(P);
+    
+    const r1 = row(b.dow + 1);
+    const r2 = row(mod(P.month - 1, 7) + 1);
+    const r3 = row(mod(P.year, 7) + 1);
+    const r4 = r1.map((v, i) => v + r2[i] + r3[i]);
+    const calcChing = (prev) => prev.map(v => { let mod7 = v % 7; return mod7 === 0 ? 7 : mod7; });
+    const r5 = calcChing(r4);
+    const r6 = calcChing(r5);
+    const r7 = calcChing(r6);
+    const r8 = r4.map(v => ((v * 3) % 7) + 1);
+    const powers = [6, 15, 8, 17, 19, 21, 10];
+    const r9 = r4.map(v => powers[(v - 1) % 7]);
+
+    const allRows = [
+      ['ฐานที่ 1 (วันเกิด)', r1, `วัน${DAYS[b.dow]}`],
+      ['ฐานที่ 2 (เดือนเกิด)', r2, `เดือน${TMONTH[P.month - 1]}`],
+      ['ฐานที่ 3 (ปีเกิด)', r3, `ปี${ANIMAL[P.year][0]}`],
+      ['ฐานที่ 4 (ฐานรวม)', r4, 'ผลรวม วัน+เดือน+ปี'],
+      ['ฐานที่ 5 (ฐานชิ่ง 1)', r5, 'ฐานที่ 4 แปลงเศษ 7'],
+      ['ฐานที่ 6 (ฐานชิ่ง 2)', r6, 'ฐานที่ 5 แปลงเศษ 7'],
+      ['ฐานที่ 7 (ฐานชิ่ง 3)', r7, 'ฐานที่ 6 แปลงเศษ 7'],
+      ['ฐานที่ 8 (ฐานพระเคราะห์)', r8, 'เกณฑ์ดาวเสวยอายุ'],
+      ['ฐานที่ 9 (กำลังพระเคราะห์)', r9, 'พลังงานดาวประจำภพ']
+    ];
+
+    let h = `<div class="card"><div class="tbl-wrap"><table><tr><th>ฐาน / ภพ</th>${PHOP.map(p => `<th>${p[0]}</th>`).join('')}</tr>`;
+    allRows.forEach((r, idx) => {
+      const isBold = idx === 3 || idx === 7;
+      h += `<tr${isBold ? ' style="background:rgba(245,201,106,.05)"' : ''}><td><b>${r[0]}</b><br><span class="muted">${r[2]}</span></td>${r[1].map(v => `<td${isBold ? ' class="big" style="font-size:1.05rem"' : ''}>${v}</td>`).join('')}</tr>`;
+    });
+    h += `</table></div><p class="muted" style="margin-top:12px">คำนวณครบ 9 ฐานตามตำราเลข 7 ตัว 9 ฐานโบราณ</p></div>`;
+
+    h += `<div class="card"><h3>คำทำนายภพสำคัญ (จากฐานรวม)</h3>`;
+    PHOP.forEach((p, i) => {
+      const v = r4[i], lv = v >= 15 ? 2 : v >= 10 ? 1 : 0;
+      let cls, txt;
+      if (i === 1){
+        cls = ['good','mid','bad'][lv];
+        txt = ['ชีวิตราบรื่น อุปสรรคน้อย','มีอุปสรรคตามวาระ แก้ไขได้','เจออุปสรรคบ่อย ฝึกให้แกร่งขึ้น'][lv];
+      } else {
+        cls = ['bad','mid','good'][lv];
+        txt = [`ต้องใส่ใจเป็นพิเศษเรื่อง${p[1]}`,`ปานกลาง เรื่อง${p[1]} ทรงตัวตามความพยายาม`,`โดดเด่นมาก เป็นจุดแข็งเรื่อง${p[1]}`][lv];
+      }
+      h += `<p><b>${p[0]}</b> <span class="pill">ผลรวม ${v}</span> <span class="${cls}">${txt}</span></p>`;
+    });
+    out.innerHTML = h + '</div>';
+  }
+
+  /* ================= ทักษา & ชื่อ ================= */
+  function renderTaksa(){
+    const out = $('#taksaOut'); if(!out) return;
+    if (!P) { out.innerHTML = need(); return; }
+    const b = info(P), ring = taksaRing(b.t), born = TAKSA[b.t];
+    let h = `<div class="card"><div class="muted">คุณเกิดวัน</div><div class="big">${born.n}</div>
+    <p>สีประจำวันเกิด: ${sw(born)}</p><div class="tbl-wrap"><table>
+    <tr><th>ตำแหน่ง</th><th>ดาว</th><th>สี</th><th>อักษร</th><th>ความหมาย</th></tr>`;
+    ring.forEach(r => { h += `<tr${r.n === 'กาลกิณี' ? ' class="bad"' : ''}><td>${r.n}</td><td>${r.pl.n}</td><td>${sw(r.pl)}</td><td>${r.pl.L}</td><td style="text-align:left">${r.m}</td></tr>`; });
+    h += `</table></div></div>
+    <div class="card"><h3>ตรวจอักษรกาลกิณีในชื่อ</h3>
+    <input id="nameChk" value="${esc(P.name || '')}" placeholder="พิมพ์ชื่อหรือนามสกุล">
+    <button type="button" class="btn" id="nameBtn">ตรวจชื่อ</button><div id="nameOut" style="margin-top:10px"></div></div>`;
+    out.innerHTML = h;
+    on('#nameBtn', 'click', () => checkName(ring));
+    if (P.name) checkName(ring);
+  }
+  function checkName(ring){
+    const n = $('#nameChk').value.trim();
+    const out = $('#nameOut');
+    if (!out) return;
+    if (!n) { out.innerHTML = '<p class="muted">พิมพ์ชื่อเพื่อตรวจ</p>'; return; }
+    const find = pl => [...new Set([...n].filter(c => pl.chars.includes(c)))];
+    const bad = find(ring[7].pl), sri = find(ring[3].pl), det = find(ring[2].pl);
+    let h = bad.length
+      ? `<p class="bad">⚠️ พบอักษรกาลกิณี: <b>${bad.join(' ')}</b> — ตามตำราควรหลีกเลี่ยง</p>`
+      : `<p class="good">✅ ชื่อ “${esc(n)}” ไม่มีอักษรกาลกิณี</p>`;
+    if (sri.length) h += `<p class="good">💰 มีอักษรศรี (เสริมโชคลาภ): <b>${sri.join(' ')}</b></p>`;
+    if (det.length) h += `<p class="good">👑 มีอักษรเดช (เสริมอำนาจ): <b>${det.join(' ')}</b></p>`;
+    out.innerHTML = h;
+  }
+
+  /* ================= 12 ราศี ================= */
+  const zCard = (t, i) => `<div class="card"><div class="muted">${t}</div><div class="big">${ZOD[i][1]} ราศี${ZOD[i][0]}</div><span class="pill">ธาตุ${ZOD[i][2]}</span><p>${ZOD[i][3]}</p></div>`;
+  function renderZodiac(){
+    const zodOut = $('#zodiacOut');
+    if (zodOut){
+      if (!P) zodOut.innerHTML = `<p class="muted">กรอกวันเกิดที่หน้าแรกเพื่อดูราศีของคุณ หรือเลือกราศีด้านล่างได้เลย</p>`;
+      else {
+        const b = info(P), s = sign(b.m, b.d, SID), t = sign(b.m, b.d, TROP);
+        zodOut.innerHTML = `<div class="grid">${zCard('ราศีแบบไทย (ดาราคติ)', s)}${zCard('ราศีแบบตะวันตก (Tropical)', t)}</div>`;
+        const zSel = $('#zSel'); if(zSel) zSel.value = s;
+      }
+    }
+    renderDaily();
+  }
+  function renderDaily(){ const el = $('#zDaily'), sel = $('#zSel'); if(el && sel) el.innerHTML = dailyHTML(+sel.value || 0); }
+
+  /* ================= เลขศาสตร์ ================= */
+  const NUM = {1:'ผู้นำ มุ่งมั่น เป็นตัวของตัวเอง กล้าบุกเบิก',2:'นักประสาน อ่อนโยน ทำงานร่วมกับคนอื่นเก่ง',3:'นักสื่อสาร ร่าเริง มีความคิดสร้างสรรค์',4:'นักสร้าง มีระเบียบ ขยัน มั่นคง',5:'นักผจญภัย รักอิสระ ปรับตัวเก่ง',6:'ผู้ดูแล รักครอบครัว มีความรับผิดชอบ',7:'นักคิด ชอบค้นหาความจริง ลึกซึ้ง',8:'นักบริหาร มุ่งความสำเร็จ เก่งเรื่องเงิน',9:'ผู้ให้ มีเมตตา มองภาพกว้าง',11:'ผู้มีญาณหยั่งรู้ สร้างแรงบันดาลใจ (Master Number)',22:'ผู้สร้างการใหญ่ เปลี่ยนความฝันเป็นจริง (Master Number)',33:'ครูผู้ให้ เมตตาสูง (Master Number)'};
+  const PYEAR = {1:'ปีแห่งการเริ่มต้น เหมาะเริ่มสิ่งใหม่',2:'ปีแห่งความร่วมมือและความสัมพันธ์ ใจเย็นเข้าไว้',3:'ปีแห่งการสื่อสาร สร้างสรรค์ เข้าสังคม',4:'ปีแห่งการวางรากฐาน ทำงานหนักแต่คุ้มค่า',5:'ปีแห่งการเปลี่ยนแปลงและการเดินทาง',6:'ปีแห่งครอบครัวและความรับผิดชอบ',7:'ปีแห่งการทบทวน เรียนรู้ พัฒนาจิตใจ',8:'ปีแห่งความสำเร็จ การเงิน และอำนาจ',9:'ปีแห่งการปิดฉาก ปล่อยวาง เตรียมเริ่มรอบใหม่'};
+  const dsum = s => [...String(s)].reduce((a, c) => a + Number(c), 0);
+  function reduce(n, master = true){ while (n > 9 && !(master && [11,22,33].includes(n))) n = dsum(n); return n; }
+  function renderNum(){
+    const out = $('#numOut'); if(!out) return;
+    if (!P) { out.innerHTML = need(); return; }
+    const b = info(P), lp = reduce(dsum(`${b.y}${b.m}${b.d}`)), bd = reduce(b.d);
+    const cy = new Date().getFullYear(), py = reduce(dsum(`${cy}${b.m}${b.d}`), false);
+    out.innerHTML = `<div class="grid">
+      <div class="card"><div class="muted">เลขเส้นทางชีวิต (Life Path)</div><div class="big">${lp}</div><p>${NUM[lp]}</p></div>
+      <div class="card"><div class="muted">เลขวันเกิด</div><div class="big">${bd}</div><p>${NUM[bd]}</p></div>
+      <div class="card"><div class="muted">เลขประจำปี ${cy} ของคุณ</div><div class="big">${py}</div><p>${PYEAR[py]}</p></div>
+    </div>`;
+  }
+
+  /* ================= นักษัตรจีน ================= */
+  const ELEM = ['ทอง (โลหะ)','ทอง (โลหะ)','น้ำ','น้ำ','ไม้','ไม้','ไฟ','ไฟ','ดิน','ดิน'];
+  const cnYear = (y, m, d) => (m < 2 || (m === 2 && d < 4)) ? y - 1 : y;
+  function renderChinese(){
+    const out = $('#chineseOut'); if(!out) return;
+    if (!P) { out.innerHTML = need(); return; }
+    const b = info(P), cy = cnYear(b.y, b.m, b.d), a = mod(cy - 4, 12), A = ANIMAL[a];
+    const now = new Date(), ny = cnYear(now.getFullYear(), now.getMonth() + 1, now.getDate()), na = mod(ny - 4, 12);
+    let st, cls;
+    if (a === na){ st = 'ปีชงตัวเอง (ปีนักษัตรเดียวกับปีนี้)'; cls = 'bad'; }
+    else if (a === mod(na + 6, 12)){ st = 'ชงตรง — ควรระมัดระวังเป็นพิเศษ'; cls = 'bad'; }
+    else if (a === mod(na + 3, 12) || a === mod(na + 9, 12)){ st = 'ได้รับผลกระทบบางส่วน'; cls = 'mid'; }
+    else { st = 'ไม่ชง ดวงค่อนข้างราบรื่น'; cls = 'good'; }
+    const trio = [a % 4, a % 4 + 4, a % 4 + 8].filter(i => i !== a).map(i => `${ANIMAL[i][2]} ${ANIMAL[i][0]}`).join(', ');
+    const cl = ANIMAL[mod(a + 6, 12)];
+    out.innerHTML = `<div class="grid">
+      <div class="card"><div class="muted">ปีเกิดของคุณ</div><div class="big">${A[2]} ปี${A[0]} (${A[1]})</div>
+        <span class="pill">ธาตุ${ELEM[mod(cy, 10)]}</span><span class="pill">${cy % 2 === 0 ? 'หยาง' : 'หยิน'}</span><p>${A[3]}</p></div>
+      <div class="card"><div class="muted">ปีนี้ ปี${ANIMAL[na][0]} ${ANIMAL[na][2]}</div><p class="${cls}" style="font-size:1.1rem"><b>${st}</b></p>
+        <p>🤝 เข้ากันดี (สามประสาน): ${trio}</p><p>⚡ ปีที่ชงกับคุณ: ${cl[2]} ${cl[0]}</p></div>
+    </div><p class="muted">* นับปีนักษัตรจีนตามหลักลี่ชุน (เริ่มปีใหม่ประมาณ 4 กุมภาพันธ์)</p>`;
+  }
+
+  /* ================= ไพ่ทาโรต์ ================= */
+  const TAROT = [
+    ['0','The Fool','คนโง่','🃏','การเริ่มต้นใหม่ ความกล้า อิสระ','ประมาท ตัดสินใจหุนหันพลันแล่น'],
+    ['I','The Magician','นักมายากล','✨','ความสามารถพร้อม ได้เวลาลงมือทำ','ใช้ความสามารถผิดทาง ขาดสมาธิ'],
+    ['II','The High Priestess','สตรีนักบวช','🌙','สัญชาตญาณ ความลับ ปัญญาภายใน','ไม่ฟังเสียงตัวเอง มีเรื่องปิดบัง'],
+    ['III','The Empress','จักรพรรดินี','🌾','ความอุดมสมบูรณ์ ความรัก การดูแล','พึ่งพาคนอื่นมากไป ขาดความคิดสร้างสรรค์'],
+    ['IV','The Emperor','จักรพรรดิ','👑','อำนาจ ความมั่นคง ระเบียบ','ดื้อรั้น ใช้อำนาจมากเกินไป'],
+    ['V','The Hierophant','พระสังฆราช','📜','ประเพณี ผู้ใหญ่ การเรียนรู้','ฝืนกรอบ ไม่ทำตามธรรมเนียม'],
+    ['VI','The Lovers','คนรัก','💞','ความรัก การเลือก ความลงตัว','ความไม่ลงรอย ตัดสินใจผิด'],
+    ['VII','The Chariot','รถศึก','🏇','ชัยชนะ ความมุ่งมั่น','ขาดทิศทาง ควบคุมสถานการณ์ไม่ได้'],
+    ['VIII','Strength','พลัง','🦁','ความกล้าหาญ อดทน ใจเย็น','ขาดความมั่นใจ อารมณ์ร้อน'],
+    ['IX','The Hermit','ฤๅษี','🏮','ใคร่ครวญ แสวงหาความหมาย','โดดเดี่ยว ปลีกตัวมากเกินไป'],
+    ['X','Wheel of Fortune','กงล้อแห่งโชคชะตา','☸️','จุดเปลี่ยน โชคดีกำลังมา','โชคไม่เข้าข้าง อย่าฝืนกระแส'],
+    ['XI','Justice','ความยุติธรรม','⚖️','ความถูกต้อง เหตุและผล','ความไม่ยุติธรรม หลีกเลี่ยงความรับผิดชอบ'],
+    ['XII','The Hanged Man','คนแขวน','🙃','หยุดรอ มองมุมใหม่ เสียสละ','ติดขัด ลังเล'],
+    ['XIII','Death','ความตาย','🦋','การสิ้นสุดเพื่อเริ่มต้นใหม่','ไม่ยอมปล่อยวางสิ่งเก่า'],
+    ['XIV','Temperance','ความพอดี','🍷','สมดุล ความอดทน','เกินพอดี ขาดสมดุล'],
+    ['XV','The Devil','ปีศาจ','⛓️','พันธนาการ กิเลส การติดยึด','หลุดพ้น ได้ปลดปล่อย'],
+    ['XVI','The Tower','หอคอย','🗼','เปลี่ยนแปลงกะทันหัน สิ่งเก่าพังทลาย','รอดจากเหตุร้าย เปลี่ยนแปลงจากภายใน'],
+    ['XVII','The Star','ดวงดาว','⭐','ความหวัง แรงบันดาลใจ การเยียวยา','หมดหวัง ขาดศรัทธาในตัวเอง'],
+    ['XVIII','The Moon','ดวงจันทร์','🌕','ความไม่ชัดเจน ความกังวล ภาพลวง','ความจริงปรากฏ คลายความสับสน'],
+    ['XIX','The Sun','ดวงอาทิตย์','☀️','ความสุข ความสำเร็จ','ความสุขลดลงชั่วคราว'],
+    ['XX','Judgement','การพิพากษา','📯','การตื่นรู้ โอกาสครั้งใหม่','ลังเล โทษตัวเอง'],
+    ['XXI','The World','โลก','🌍','ความสำเร็จสมบูรณ์ จบภารกิจ','งานยังไม่เสร็จ ขาดอีกนิดเดียว']
+  ];
+  function drawTarot(){
+    const deck = TAROT.map((_, i) => i);
+    for (let i = deck.length - 1; i > 0; i--){ const j = Math.floor(Math.random()*(i+1)); [deck[i], deck[j]] = [deck[j], deck[i]]; }
+    const picks = deck.slice(0, 3).map(i => ({c: TAROT[i], rev: Math.random() < .3}));
+    const PN = ['อดีต','ปัจจุบัน','อนาคต'], qEl = $('#tQ'), q = qEl ? qEl.value.trim() : '';
+    const out = $('#tarotOut'); if(!out) return;
+    out.innerHTML = `${q ? `<p class="muted">คำถาม: “${esc(q)}”</p>` : ''}<div class="spread">${picks.map((p, i) => `
+      <div><div class="tc${p.rev ? ' rev' : ''}" id="tc${i}"><div class="in">
+        <div class="b">✦</div>
+        <div class="f"><div class="rn">${p.c[0]}</div><div class="sym">${p.c[3]}</div><div class="nm">${p.c[2]}</div><div class="rn">${p.c[1]}${p.rev ? '<br>(กลับหัว)' : ''}</div></div>
+      </div></div><div class="pos">${PN[i]}</div></div>`).join('')}</div><div class="card" id="tMean" hidden></div>`;
+    picks.forEach((_, i) => setTimeout(() => { const el = $('#tc' + i); if (el) el.classList.add('flip'); }, 400 + i*600));
+    setTimeout(() => {
+      const m = $('#tMean'); if (!m) return; m.hidden = false;
+      m.innerHTML = '<h3>คำทำนาย</h3>' + picks.map((p, i) => `<p><b>${PN[i]} — ${p.c[2]} (${p.c[1]})${p.rev ? ' กลับหัว' : ''}:</b> ${p.rev ? p.c[5] : p.c[4]}</p>`).join('')
+        + '<p class="muted">ไพ่ช่วยสะท้อนมุมมองต่อสถานการณ์ การตัดสินใจสุดท้ายอยู่ที่ตัวคุณเสมอ</p>';
+    }, 2500);
+  }
+
+  /* ================= ทำนายฝัน ================= */
+  const DREAM = [
+    {n:'งู', k:['งู'], th:'เนื้อคู่หรือคู่ครองกำลังเข้ามา ถ้างูรัดตัวมักหมายถึงจะได้พบคู่', psy:'พลังชีวิต การเปลี่ยนแปลง หรือความกลัวที่ซ่อนอยู่'},
+    {n:'ฟันหลุด/ฟันหัก', k:['ฟัน'], th:'ญาติผู้ใหญ่อาจเจ็บป่วย ควรใส่ใจสุขภาพคนในบ้าน', psy:'ความกังวลเรื่องภาพลักษณ์ หรือรู้สึกสูญเสียการควบคุม'},
+    {n:'ช้าง', k:['ช้าง'], th:'ผู้ใหญ่ให้การอุปถัมภ์ มียศตำแหน่งสูงขึ้น', psy:'ความมั่นคง ความหนักแน่น ความทรงจำ'},
+    {n:'น้ำ/ทะเล', k:['น้ำ','ทะเล'], th:'น้ำใสหมายถึงโชคดี น้ำขุ่นหมายถึงอุปสรรค', psy:'อารมณ์และจิตใต้สำนึก ความสงบหรือความวุ่นวายในใจ'},
+    {n:'ความตาย/ศพ', k:['ตาย','ศพ'], th:'ฝันร้ายกลายเป็นดี อายุยืน มีโชค', psy:'การจบช่วงชีวิตหนึ่งเพื่อเริ่มต้นใหม่'},
+    {n:'ไฟ/ไฟไหม้', k:['ไฟ'], th:'จะมีความรุ่งเรือง มีลาภ', psy:'ความหลงใหล ความโกรธ หรือพลังที่อัดอั้น'},
+    {n:'เงิน/ทอง', k:['เงิน','ทอง'], th:'มีโชคลาภ แต่ควรระวังการใช้จ่าย', psy:'การให้คุณค่าในตัวเองและความมั่นคง'},
+    {n:'การบิน', k:['บิน','ลอย'], th:'จะประสบความสำเร็จ ได้เลื่อนขั้น', psy:'ความปรารถนาอิสระ อยากหลุดจากข้อจำกัด'},
+    {n:'ตกจากที่สูง', k:['ตกจาก','ตกลงมา','ตกตึก','ตกที่สูง','ร่วงลง'], th:'ระวังอุปสรรค ตัดสินใจเรื่องสำคัญให้รอบคอบ', psy:'ความไม่มั่นคง กลัวความล้มเหลว'},
+    {n:'ถูกไล่ล่า', k:['ไล่','วิ่งหนี','หนี'], th:'มีปัญหาที่ต้องเผชิญ ไม่ควรหลีกเลี่ยง', psy:'สิ่งที่คุณกำลังหลบเลี่ยงในชีวิตจริง'},
+    {n:'พระ/วัด', k:[/พระ(?!จันทร์|อาทิตย์)/,'วัด'], th:'บุญกุศลและสิ่งศักดิ์สิทธิ์คุ้มครอง', psy:'ความต้องการความสงบและที่พึ่งทางใจ'},
+    {n:'เด็ก/ทารก', k:['เด็ก','ทารก'], th:'มีข่าวดี การเริ่มต้นใหม่', psy:'ด้านที่ใสซื่อในตัวเอง หรือโปรเจกต์ใหม่'},
+    {n:'แต่งงาน', k:['แต่งงาน'], th:'จะมีการเปลี่ยนแปลงสำคัญในชีวิต', psy:'การผสานสองด้านของตัวเองเข้าด้วยกัน'},
+    {n:'ตั้งครรภ์', k:['ตั้งครรภ์','ตั้งท้อง','ท้องโต'], th:'มีโชค มีงานใหม่หรือรายได้ใหม่', psy:'ความคิดสร้างสรรค์ที่กำลังก่อตัว'},
+    {n:'ปลา', k:[/ปลา(?!ย)/], th:'ลาภผล ความอุดมสมบูรณ์', psy:'ความคิดที่ผุดขึ้นจากจิตใต้สำนึก'},
+    {n:'สุนัข', k:['หมา','สุนัข'], th:'มิตรภาพที่ดี แต่ถ้าถูกกัดให้ระวังคนใกล้ตัว', psy:'ความภักดี ความไว้ใจ'},
+    {n:'แมว', k:['แมว'], th:'ระวังคนเจ้าเล่ห์ หรือมีเสน่ห์ดึงดูด', psy:'สัญชาตญาณ ความเป็นอิสระ'},
+    {n:'เสือ', k:['เสือ'], th:'จะมีอำนาจ ได้ผู้ใหญ่หนุน หรืออาจมีคู่แข่ง', psy:'พลังภายในและความกล้า'},
+    {n:'จระเข้', k:['จระเข้'], th:'ระวังศัตรูแฝงหรือคนไม่หวังดี', psy:'อันตรายที่ซ่อนอยู่ใต้ผิวน้ำ'},
+    {n:'ผี', k:[/ผี(?!เสื้อ)/], th:'มีเรื่องค้างคาใจ ควรทำบุญอุทิศส่วนกุศล', psy:'ความรู้สึกผิดหรืออดีตที่ยังไม่ปล่อย'},
+    {n:'เลือด', k:['เลือด'], th:'ตามตำราไทยถือว่าจะมีโชคลาภ', psy:'พลังชีวิต หรือความเหนื่อยล้าทางอารมณ์'},
+    {n:'บ้าน', k:['บ้าน'], th:'ความมั่นคงในครอบครัว', psy:'ตัวตนของคุณ แต่ละห้องคือแต่ละด้านของชีวิต'},
+    {n:'รถ', k:['รถ'], th:'การเดินทาง หรือการเปลี่ยนทิศทางชีวิต', psy:'ความรู้สึกว่าควบคุมชีวิตได้มากน้อยแค่ไหน'},
+    {n:'แฟนเก่า', k:['แฟนเก่า'], th:'ยังมีเรื่องค้างใจ หรือจะมีข่าวจากคนเก่า', psy:'บทเรียนจากความสัมพันธ์เดิม'},
+    {n:'ร้องไห้', k:['ร้องไห้'], th:'จะมีเรื่องดีเข้ามา', psy:'การระบายอารมณ์ที่เก็บไว้'},
+    {n:'ฝน', k:['ฝน'], th:'ความชุ่มชื่น โชคดีกำลังมา', psy:'การชำระล้าง เริ่มต้นใหม่'},
+    {n:'ดอกไม้', k:['ดอกไม้'], th:'ความรัก เสน่ห์ มีคนชื่นชม', psy:'ความงามและการเติบโตทางใจ'},
+    {n:'นก', k:['นก'], th:'จะได้รับข่าวสารดี', psy:'อิสระและความหวัง'},
+    {n:'กุญแจ', k:['กุญแจ'], th:'พบทางออกของปัญหา', psy:'โอกาสหรือความลับที่กำลังเปิดออก'},
+    {n:'การสอบ', k:['สอบ'], th:'จะมีบททดสอบในชีวิต', psy:'ความกังวลเรื่องการถูกประเมิน'},
+    {n:'ผม', k:['ผมร่วง','ตัดผม','ผมหงอก'], th:'ผมร่วงระวังเสียทรัพย์ ตัดผมหมายถึงตัดสิ่งเก่าออก', psy:'ความกังวลเรื่องภาพลักษณ์และพลังชีวิต'},
+    {n:'แหวน', k:['แหวน'], th:'มีคู่ครอง หรือคำมั่นสัญญา', psy:'พันธะและความผูกพัน'},
+    {n:'พญานาค', k:['นาค'], th:'สิ่งศักดิ์สิทธิ์คุ้มครอง จะมีโชคใหญ่', psy:'พลังที่ยิ่งใหญ่และการปกป้อง'},
+    {n:'เต่า', k:['เต่า'], th:'อายุยืน ความมั่นคง', psy:'ความอดทน ค่อยเป็นค่อยไป'},
+    {n:'ลิง', k:['ลิง'], th:'ระวังคนพูดมากหรือคนซุกซนรอบตัว', psy:'ความคิดที่ฟุ้งซ่าน'},
+    {n:'ภูเขา', k:['ภูเขา','ภูผา'], th:'จะบรรลุเป้าหมายใหญ่', psy:'อุปสรรคหรือความทะเยอทะยาน'},
+    {n:'ฟ้าผ่า', k:['ฟ้าผ่า'], th:'จะมีการเปลี่ยนแปลงกะทันหัน', psy:'การตระหนักรู้แบบฉับพลัน'},
+    {n:'ไข่', k:['ไข่'], th:'การเริ่มต้นใหม่ มีโอกาสดี', psy:'ศักยภาพที่รอการฟักตัว'},
+    {n:'กอด/จูบ', k:['กอด','จูบ'], th:'ความรักกำลังมา ความสัมพันธ์แน่นแฟ้น', psy:'ความต้องการความใกล้ชิดและการยอมรับ'}
+  ];
+  function readDream(){
+    const tEl = $('#dText'), out = $('#dreamOut');
+    if (!tEl || !out) return;
+    const t = tEl.value.trim();
+    if (!t) { out.innerHTML = '<p class="muted">กรุณาเล่าความฝันก่อน</p>'; return; }
+    const hits = DREAM.filter(e => e.k.some(k => k instanceof RegExp ? k.test(t) : t.includes(k)));
+    out.innerHTML = hits.length
+      ? `<p class="muted">พบสัญลักษณ์ในฝัน ${hits.length} อย่าง</p>` + hits.map(e => `<div class="card"><h3>🔹 ${e.n}</h3><p><b>ตำราไทย:</b> ${e.th}</p><p><b>มุมมองจิตวิทยา:</b> ${e.psy}</p></div>`).join('')
+      : `<div class="card"><p>ยังไม่พบสัญลักษณ์ที่ตรงกับตำราในระบบ ลองเล่าโดยระบุสิ่งที่เห็นให้ชัดขึ้น เช่น สัตว์ คน สถานที่ หรือสิ่งของ</p><p class="muted">ในทางจิตวิทยา ความฝันมักสะท้อนความรู้สึกและเรื่องที่ค้างใจในช่วงนี้</p></div>`;
+  }
+
+  /* ================= ดูลายมือ: ข้อมูล ================= */
+  const PALM = {
+    shape:{t:'รูปทรงมือ', o:{
+      earth:['ธาตุดิน — ฝ่ามือเหลี่ยม นิ้วสั้น','ติดดิน ทำงานจริงจัง เชื่อถือได้ ชอบงานที่จับต้องได้'],
+      air:['ธาตุลม — ฝ่ามือเหลี่ยม นิ้วยาว','ช่างคิด สื่อสารเก่ง อยากรู้อยากเห็น แต่อาจคิดมาก'],
+      fire:['ธาตุไฟ — ฝ่ามือยาว นิ้วสั้น','กระตือรือร้น กล้าตัดสินใจ พลังสูง แต่ใจร้อน'],
+      water:['ธาตุน้ำ — ฝ่ามือยาว นิ้วยาว','อ่อนไหว มีจินตนาการ มีศิลปะ เห็นอกเห็นใจผู้อื่น']}},
+    heart:{t:'เส้นหัวใจ (เส้นบนสุด สีชมพู)', o:{
+      curve:['โค้งขึ้น จบระหว่างนิ้วชี้กับนิ้วกลาง','รักอบอุ่น แสดงออกเปิดเผย ให้ความสำคัญกับคนรัก'],
+      straight:['ตรงยาวพาดฝ่ามือ','รักมั่นคง ใช้เหตุผลในความรัก อาจเก็บความรู้สึก'],
+      short:['สั้น จบใต้นิ้วกลาง','ให้ความสำคัญกับอิสระ ไม่ชอบความรักที่ผูกมัดเกินไป'],
+      branch:['มีกิ่งแตกที่ปลาย','มีเสน่ห์ มีคนเข้ามาให้เลือก ความรักหลากมิติ']}},
+    head:{t:'เส้นสมอง (เส้นกลาง สีฟ้า)', o:{
+      straight:['ตรงยาว','คิดเป็นระบบ มีเหตุผล เหมาะกับงานวิเคราะห์'],
+      curve:['โค้งลงสู่ฐานมือ','สร้างสรรค์ จินตนาการสูง เหมาะกับงานศิลปะ'],
+      short:['สั้น','ตัดสินใจเร็ว ชอบลงมือมากกว่าวางแผนนาน'],
+      sep:['เริ่มห่างจากเส้นชีวิต','กล้าคิดกล้าทำ เป็นตัวของตัวเองตั้งแต่อายุน้อย']}},
+    life:{t:'เส้นชีวิต (โค้งรอบนิ้วโป้ง สีเขียว)', o:{
+      wide:['ยาว โค้งกว้าง','พลังชีวิตดี กระตือรือร้น ชอบเข้าสังคม'],
+      close:['โค้งชิดนิ้วโป้ง','ระมัดระวัง ชอบความสงบ ควรเติมพลังด้วยการออกกำลังกาย'],
+      double:['มีเส้นคู่ขนาน','มีคนคอยสนับสนุน ฟื้นตัวจากปัญหาได้ดี'],
+      broken:['ขาดเป็นช่วง','มีจุดเปลี่ยนสำคัญ เช่น ย้ายที่อยู่หรือเปลี่ยนวิถีชีวิต (ไม่ได้หมายถึงอายุสั้น)']}},
+    fate:{t:'เส้นวาสนา (แนวตั้งกลางฝ่ามือ สีทอง)', o:{
+      deep:['ชัดและลึก','เป้าหมายชีวิตชัดเจน การงานมั่นคง'],
+      fromlife:['เริ่มจากเส้นชีวิต','สร้างเนื้อสร้างตัวได้ด้วยตัวเอง'],
+      none:['ไม่มีหรือเห็นไม่ชัด','ชีวิตยืดหยุ่น ไม่ยึดติดเส้นทางเดียว'],
+      broken:['ขาดหลายช่วง','การงานมีหลายช่วงเปลี่ยนผ่าน แต่ละครั้งพาไปสู่สิ่งใหม่']}}
+  };
+  function buildPalm(){
+    const form = $('#palmForm');
+    if (form){
+      form.innerHTML = Object.keys(PALM).map(k => {
+        const g = PALM[k];
+        return `<div><label for="pm_${k}">${g.t}</label><select id="pm_${k}">${Object.keys(g.o).map(v => `<option value="${v}">${g.o[v][0]}</option>`).join('')}</select></div>`;
+      }).join('');
+    }
+  }
+  function readPalm(){
+    const handEl = $('#pm_hand'), out = $('#palmOut');
+    if (!out) return;
+    const hand = handEl && handEl.value === 'L' ? 'มือซ้าย (พื้นดวงแต่กำเนิด)' : 'มือขวา (สิ่งที่สร้างขึ้นเองในปัจจุบัน)';
+    const preview = $('#palmPreview'), palmImg = $('#palmImg');
+    const img = preview && !preview.hidden && palmImg && palmImg.src ? `<img src="${palmImg.src}" class="palm-img" style="max-height:220px" alt="ฝ่ามือ">` : '';
+    out.innerHTML = `<div class="card"><h3>ผลการอ่านลายมือ · ${hand}</h3>${img}` + Object.keys(PALM).map(k => {
+      const g = PALM[k], sel = $('#pm_' + k), o = g.o[sel ? sel.value : Object.keys(g.o)[0]];
+      return `<p><b>${g.t}:</b> <span class="pill">${o[0]}</span><br>${o[1]}</p>`;
+    }).join('') + '<p class="muted">ลายมือเปลี่ยนแปลงได้ตามการใช้ชีวิต ใช้เป็นแนวทางทำความรู้จักตัวเองเท่านั้น</p></div>';
+    out.scrollIntoView({behavior: 'smooth', block: 'start'});
+  }
+
+  /* ================= ดูลายมือ: กล้อง & รูปภาพ ================= */
+  const camMsg = h => { const el = $('#camMsg'); if(el) el.innerHTML = h || ''; };
+  const canLiveCam = () => !!(window.isSecureContext && navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+
+  function stopCam(){
+    if (camStream){ camStream.getTracks().forEach(t => t.stop()); camStream = null; }
+    const v = $('#camVideo'); if (v) v.srcObject = null;
+    const box = $('#camBox'); if (box) box.hidden = true;
+  }
+  async function startCam(){
+    stopCam();
+    camMsg('กำลังเปิดกล้อง... (ถ้ามีหน้าต่างขออนุญาต กรุณากด “อนุญาต”)');
+    try {
+      camStream = await navigator.mediaDevices.getUserMedia({
+        video: {facingMode: {ideal: camFacing}, width: {ideal: 1920}, height: {ideal: 1080}}, audio: false
+      });
+      const v = $('#camVideo');
+      v.srcObject = camStream;
+      v.classList.toggle('mirror', camFacing === 'user');
+      $('#camBox').hidden = false;
+      try { await v.play(); } catch (e) {}
+      camMsg('');
+      const box = $('#camBox'); if(box) box.scrollIntoView({behavior: 'smooth', block: 'center'});
+    } catch (err) {
+      stopCam();
+      const name = err && err.name;
+      const why = name === 'NotAllowedError' ? 'คุณยังไม่อนุญาตให้เว็บใช้กล้อง (เปิดสิทธิ์ได้ที่ไอคอนแม่กุญแจข้างแถบที่อยู่เว็บ)'
+        : name === 'NotFoundError' ? 'ไม่พบกล้องในอุปกรณ์นี้'
+        : name === 'NotReadableError' ? 'กล้องกำลังถูกใช้งานโดยแอปอื่น'
+        : 'เปิดกล้องในหน้าเว็บไม่ได้';
+      camMsg(`<span class="mid">${why}</span><br><label for="fileCamera" class="btn ghost small" style="margin-top:8px">📷 ใช้แอปกล้องของเครื่องแทน</label>`);
+    }
+  }
+  function openCamera(){
+    if (canLiveCam()) startCam();
+    else { const fc = $('#fileCamera'); if(fc) fc.click(); }
+  }
+  function takeShot(){
+    const v = $('#camVideo');
+    if (!v || !v.videoWidth) { camMsg('<span class="mid">กล้องยังไม่พร้อม ลองอีกครั้ง</span>'); return; }
+    const c = $('#camCanvas');
+    c.width = v.videoWidth; c.height = v.videoHeight;
+    const x = c.getContext('2d');
+    if (camFacing === 'user'){ x.translate(c.width, 0); x.scale(-1, 1); }
+    x.drawImage(v, 0, 0, c.width, c.height);
+    const url = c.toDataURL('image/jpeg', 0.92);
+    stopCam();
+    setPalmImage(url, false);
+  }
+  function setPalmImage(src, isBlobURL){
+    if (palmURL){ URL.revokeObjectURL(palmURL); palmURL = null; }
+    if (isBlobURL) palmURL = src;
+    const img = $('#palmImg'), prev = $('#palmPreview'), q = $('#palmQ');
+    if(!img || !prev) return;
+    img.onload = () => checkQuality(img);
+    img.onerror = () => { if(q) q.innerHTML = '<span class="bad">เปิดรูปนี้ไม่ได้ ลองเลือกรูปอื่น</span>'; };
+    img.src = src;
+    prev.hidden = false;
+    camMsg('');
+    setTimeout(() => prev.scrollIntoView({behavior: 'smooth', block: 'center'}), 100);
+  }
+  function handleFile(e){
+    const f = e.target.files && e.target.files[0];
+    if (!f) return;
+    if (f.type && !/^image\//.test(f.type)) { camMsg('<span class="bad">ไฟล์นี้ไม่ใช่รูปภาพ</span>'); return; }
+    stopCam();
+    setPalmImage(URL.createObjectURL(f), true);
+    e.target.value = '';
+  }
+  function checkQuality(img){
+    try {
+      const c = document.createElement('canvas'); c.width = c.height = 48;
+      const x = c.getContext('2d'); x.drawImage(img, 0, 0, 48, 48);
+      const d = x.getImageData(0, 0, 48, 48).data; let s = 0;
+      for (let i = 0; i < d.length; i += 4) s += 0.299*d[i] + 0.587*d[i+1] + 0.114*d[i+2];
+      const avg = s / (d.length / 4);
+      const pq = $('#palmQ');
+      if(pq){
+        pq.innerHTML = avg < 70 ? '<span class="mid">⚠️ รูปค่อนข้างมืด เส้นมืออาจไม่ชัด ลองถ่ายในที่สว่างขึ้น</span>'
+          : avg > 215 ? '<span class="mid">⚠️ รูปสว่างจ้าเกินไป ลองหลบแสงตรงหรือปิดแฟลช</span>'
+          : '<span class="good">✅ แสงพอดี ดูรูปแล้วเลือกลักษณะเส้นด้านล่างได้เลย</span>';
+      }
+    } catch (e) { const pq = $('#palmQ'); if(pq) pq.textContent = ''; }
+  }
+  function deletePalm(){
+    if (palmURL){ URL.revokeObjectURL(palmURL); palmURL = null; }
+    const img = $('#palmImg'), prev = $('#palmPreview'), pq = $('#palmQ');
+    if(img) img.removeAttribute('src');
+    if(prev) prev.hidden = true;
+    if(pq) pq.textContent = '';
+  }
+
+  /* ================= แชร์ดวง ================= */
+  let shareFmt = 'story';
+  const FONT_H = "'Prompt', sans-serif", FONT_B = "'Sarabun', sans-serif";
+  const shareMsg = (t, cls) => { const el = $('#shareMsg'); if(el) el.innerHTML = t ? `<span class="${cls || 'good'}">${t}</span>` : ''; };
+  const siteURL = () => /^https?:$/.test(location.protocol) ? location.href.split('#')[0] : '';
+  const starStr = n => '★'.repeat(n) + '☆'.repeat(5 - n);
+
+  function shareData(){
+    const b = info(P), now = new Date(), dw = now.getDay();
+    const ring = taksaRing(DAY2T[dw]), g = k => ring.find(r => r.n === k).pl;
+    const zi = sign(b.m, b.d, SID);
+    const r = rng(now.toDateString() + '|' + zi);
+    const stars = Object.keys(DAILY).map(k => [k, 1 + Math.floor(r() * 5)]);
+    const time = TIMES[Math.floor(r() * TIMES.length)], dir = DIRS[Math.floor(r() * 8)];
+    const cy = cnYear(b.y, b.m, b.d);
+    const avg = stars.reduce((s, x) => s + x[1], 0) / stars.length;
+    return {
+      name: P.name, dayName: DAYS[dw],
+      date: now.toLocaleDateString('th-TH', {day: 'numeric', month: 'long', year: 'numeric'}),
+      zod: ZOD[zi], born: TAKSA[b.t], lp: reduce(dsum(`${b.y}${b.m}${b.d}`)), animal: ANIMAL[mod(cy - 4, 12)],
+      stars, time, dir,
+      colors: [['งาน', g('เดช')], ['เงิน', g('ศรี')], ['ผู้ใหญ่', g('มนตรี')], ['ควรเลี่ยง', g('กาลกิณี')]],
+      mood: avg >= 4 ? 'วันนี้ดวงพุ่ง! 🚀' : avg >= 3 ? 'วันนี้ดวงดี ไปได้สวย ✨' : avg >= 2 ? 'วันนี้ดวงกลางๆ ใจเย็นไว้ 🍀' : 'วันนี้ค่อยๆ ไป ระวังนิดนึง 🙏'
+    };
+  }
+
+  function rrect(c, x, y, w, h, r){
+    c.beginPath(); c.moveTo(x + r, y);
+    c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r);
+    c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath();
+  }
+  function panel(c, x, y, w, h){
+    c.fillStyle = 'rgba(255,255,255,.07)'; rrect(c, x, y, w, h, 26); c.fill();
+    c.strokeStyle = 'rgba(255,255,255,.15)'; c.lineWidth = 2; c.stroke();
+  }
+  function fitText(c, t, maxW, size, weight, fam){
+    do { c.font = `${weight} ${size}px ${fam}`; size -= 2; } while (c.measureText(t).width > maxW && size > 14);
+  }
+
+  async function drawShare(){
+    const sNeed = $('#shareNeed'), sBox = $('#shareBox');
+    if(!sNeed || !sBox) return false;
+    if (!P){ sNeed.innerHTML = need(); sBox.hidden = true; shareReady = false; return false; }
+    sNeed.innerHTML = ''; sBox.hidden = false;
+    try { await Promise.all([document.fonts.load(`600 40px ${FONT_H}`), document.fonts.load(`400 40px ${FONT_B}`)]); } catch (e) {}
+
+    const d = shareData(), W = 1080, H = shareFmt === 'story' ? 1920 : 1350;
+    const cv = $('#shareCanvas'); if(!cv) return false;
+    cv.width = W; cv.height = H;
+    const c = cv.getContext('2d');
+
+    const bg = c.createRadialGradient(W / 2, 0, 50, W / 2, H * 0.4, H);
+    bg.addColorStop(0, '#3a1d70'); bg.addColorStop(1, '#0d0820');
+    c.fillStyle = bg; c.fillRect(0, 0, W, H);
+    const sr = rng('stars' + H);
+    for (let i = 0; i < 140; i++){
+      c.globalAlpha = 0.2 + sr() * 0.6; c.fillStyle = '#fff';
+      c.beginPath(); c.arc(sr() * W, sr() * H, sr() * 2.2 + 0.4, 0, Math.PI * 2); c.fill();
+    }
+    c.globalAlpha = 1;
+    c.strokeStyle = 'rgba(245,201,106,.5)'; c.lineWidth = 3; rrect(c, 24, 24, W - 48, H - 48, 36); c.stroke();
+
+    let y = (H - 1260) / 2;
     c.textAlign = 'center';
-    c.fillStyle = '#a99fc9'; c.font = `400 30px ${FONT_B}`; c.fillText(cell[0], x + cw / 2, yy + 50);
-    c.fillStyle = '#f5c96a'; fitText(c, cell[1], cw - 40, 48, 600, FONT_H); c.fillText(cell[1], x + cw / 2, yy + 110);
-  });
-  y += 330;
 
-  panel(c, 60, y, 960, 290);
-  c.textAlign = 'center'; c.fillStyle = '#ffffff'; c.font = `600 36px ${FONT_H}`; c.fillText('ดวงวันนี้', W / 2, y + 55);
-  d.stars.forEach((s, i) => {
-    const yy = y + 115 + i * 50;
-    c.textAlign = 'left'; c.fillStyle = '#eee8ff'; c.font = `400 34px ${FONT_B}`; c.fillText(s[0], 120, yy);
-    c.textAlign = 'right'; c.fillStyle = '#f5c96a'; c.font = `400 38px ${FONT_B}`; c.fillText(starStr(s[1]), 960, yy);
-  });
-  y += 315;
+    c.fillStyle = '#f5c96a'; c.font = `600 58px ${FONT_H}`; c.fillText('✨ โหราจักรวาล ✨', W / 2, y + 58);
+    c.fillStyle = '#a99fc9'; c.font = `400 34px ${FONT_B}`; c.fillText(`ดวงประจำวัน${d.dayName}ที่ ${d.date}`, W / 2, y + 112);
+    const who = d.name ? `คุณ${d.name}` : 'ดวงของฉัน';
+    c.fillStyle = '#ffffff'; fitText(c, who, W - 160, 66, 600, FONT_H); c.fillText(who, W / 2, y + 195);
+    c.fillStyle = '#f5c96a'; fitText(c, d.mood, W - 160, 42, 600, FONT_H); c.fillText(d.mood, W / 2, y + 268);
+    y += 300;
 
-  panel(c, 60, y, 960, 200);
-  c.textAlign = 'center'; c.fillStyle = '#ffffff'; c.font = `600 34px ${FONT_H}`; c.fillText('สีมงคลวันนี้', W / 2, y + 50);
-  d.colors.forEach((col, i) => {
-    const cx = 180 + i * 240, cy = y + 105;
-    c.beginPath(); c.arc(cx, cy, 30, 0, Math.PI * 2); c.fillStyle = col[1].h; c.fill();
-    c.strokeStyle = 'rgba(255,255,255,.6)'; c.lineWidth = 3; c.stroke();
-    if (i === 3){ c.strokeStyle = '#ff8a8a'; c.lineWidth = 5; c.beginPath(); c.moveTo(cx - 22, cy + 22); c.lineTo(cx + 22, cy - 22); c.stroke(); }
-    const t = `${col[0]}: ${col[1].c}`;
-    c.fillStyle = i === 3 ? '#ff8a8a' : '#eee8ff'; fitText(c, t, 225, 26, 400, FONT_B); c.fillText(t, cx, cy + 70);
-  });
-  y += 225;
+    const cells = [
+      ['ราศี (แบบไทย)', `${d.zod[1]} ${d.zod[0]}`],
+      ['เกิดวัน', d.born.n],
+      ['เลขเส้นทางชีวิต', `เลข ${d.lp}`],
+      ['ปีนักษัตร', `${d.animal[2]} ปี${d.animal[0]}`]
+    ];
+    const cw = 465, ch = 140;
+    cells.forEach((cell, i) => {
+      const x = 60 + (i % 2) * (cw + 30), yy = y + Math.floor(i / 2) * (ch + 20);
+      panel(c, x, yy, cw, ch);
+      c.textAlign = 'center';
+      c.fillStyle = '#a99fc9'; c.font = `400 30px ${FONT_B}`; c.fillText(cell[0], x + cw / 2, yy + 50);
+      c.fillStyle = '#f5c96a'; fitText(c, cell[1], cw - 40, 48, 600, FONT_H); c.fillText(cell[1], x + cw / 2, yy + 110);
+    });
+    y += 330;
 
-  const line = `⏰ เวลาดี ${d.time}    ·    🧭 ทิศมงคล ${d.dir}`;
-  c.fillStyle = '#eee8ff'; fitText(c, line, 960, 32, 400, FONT_B); c.fillText(line, W / 2, y + 35);
-  y += 45;
-  const foot = (siteURL() ? siteURL().replace(/^https?:\/\//, '') + ' · ' : '') + 'เพื่อความบันเทิง';
-  c.fillStyle = '#a99fc9'; fitText(c, foot, 960, 26, 400, FONT_B); c.fillText(foot, W / 2, y + 35);
+    panel(c, 60, y, 960, 290);
+    c.textAlign = 'center'; c.fillStyle = '#ffffff'; c.font = `600 36px ${FONT_H}`; c.fillText('ดวงวันนี้', W / 2, y + 55);
+    d.stars.forEach((s, i) => {
+      const yy = y + 115 + i * 50;
+      c.textAlign = 'left'; c.fillStyle = '#eee8ff'; c.font = `400 34px ${FONT_B}`; c.fillText(s[0], 120, yy);
+      c.textAlign = 'right'; c.fillStyle = '#f5c96a'; c.font = `400 38px ${FONT_B}`; c.fillText(starStr(s[1]), 960, yy);
+    });
+    y += 315;
 
-  $('#shareImg').src = cv.toDataURL('image/png'); $('#shareImg').hidden = false;
-  shareFile = await new Promise(res => {
-    try { cv.toBlob(bl => { try { res(bl ? new File([bl], 'horoscope.png', {type: 'image/png'}) : null); } catch (e) { res(null); } }, 'image/png'); }
-    catch (e) { res(null); }
-  });
-  shareReady = true; shareMsg('');
-  return true;
-}
+    panel(c, 60, y, 960, 200);
+    c.textAlign = 'center'; c.fillStyle = '#ffffff'; c.font = `600 34px ${FONT_H}`; c.fillText('สีมงคลวันนี้', W / 2, y + 50);
+    d.colors.forEach((col, i) => {
+      const cx = 180 + i * 240, cy = y + 105;
+      c.beginPath(); c.arc(cx, cy, 30, 0, Math.PI * 2); c.fillStyle = col[1].h; c.fill();
+      c.strokeStyle = 'rgba(255,255,255,.6)'; c.lineWidth = 3; c.stroke();
+      if (i === 3){ c.strokeStyle = '#ff8a8a'; c.lineWidth = 5; c.beginPath(); c.moveTo(cx - 22, cy + 22); c.lineTo(cx + 22, cy - 22); c.stroke(); }
+      const t = `${col[0]}: ${col[1].c}`;
+      c.fillStyle = i === 3 ? '#ff8a8a' : '#eee8ff'; fitText(c, t, 225, 26, 400, FONT_B); c.fillText(t, cx, cy + 70);
+    });
+    y += 225;
 
-function shareText(){
-  const d = shareData();
-  return `🔮 ดวงวันนี้${d.name ? 'ของ' + d.name : 'ของฉัน'} (${d.date})\n${d.mood}\n`
-    + `${d.zod[1]} ราศี${d.zod[0]} · เกิดวัน${d.born.n} · เลขชีวิต ${d.lp} · ปี${d.animal[0]}\n`
-    + d.stars.map(s => `${s[0]} ${starStr(s[1])}`).join('\n')
-    + `\nสีเสริมงาน: ${d.colors[0][1].c} · สีเสริมเงิน: ${d.colors[1][1].c}`
-    + (siteURL() ? `\nดูดวงของคุณได้ที่ ${siteURL()}` : '');
-}
-function notReady(){
-  if (shareReady) return false;
-  drawShare(); shareMsg('กำลังสร้างรูป กรุณากดอีกครั้ง', 'mid');
-  return true;
-}
-function saveImage(){
-  if (notReady()) return;
-  const a = document.createElement('a');
-  a.href = $('#shareCanvas').toDataURL('image/png');
-  a.download = `ดวงวันนี้-${new Date().toISOString().slice(0, 10)}.png`;
-  document.body.appendChild(a); a.click(); a.remove();
-  shareMsg('✅ บันทึกรูปแล้ว');
-}
-function shareImage(){
-  if (notReady()) return;
-  if (shareFile && navigator.canShare && navigator.canShare({files: [shareFile]})){
-    navigator.share({files: [shareFile], text: shareText()})
-      .then(() => shareMsg('✅ แชร์เรียบร้อย'))
-      .catch(e => { if (!e || e.name !== 'AbortError') shareMsg('แชร์ไม่สำเร็จ ลองกด “บันทึกรูป” แล้วโพสต์เองแทน', 'mid'); });
-  } else {
-    saveImage();
-    shareMsg('อุปกรณ์นี้แชร์รูปโดยตรงไม่ได้ ระบบบันทึกรูปให้แล้ว นำไปโพสต์ได้เลย', 'mid');
+    const line = `⏰ เวลาดี ${d.time}    ·    🧭 ทิศมงคล ${d.dir}`;
+    c.fillStyle = '#eee8ff'; fitText(c, line, 960, 32, 400, FONT_B); c.fillText(line, W / 2, y + 35);
+    y += 45;
+    const foot = (siteURL() ? siteURL().replace(/^https?:\/\//, '') + ' · ' : '') + 'เพื่อความบันเทิง';
+    c.fillStyle = '#a99fc9'; fitText(c, foot, 960, 26, 400, FONT_B); c.fillText(foot, W / 2, y + 35);
+
+    const shareImgEl = $('#shareImg');
+    if(shareImgEl) { shareImgEl.src = cv.toDataURL('image/png'); shareImgEl.hidden = false; }
+    shareFile = await new Promise(res => {
+      try { cv.toBlob(bl => { try { res(bl ? new File([bl], 'horoscope.png', {type: 'image/png'}) : null); } catch (e) { res(null); } }, 'image/png'); }
+      catch (e) { res(null); }
+    });
+    shareReady = true; shareMsg('');
+    return true;
   }
-}
-function openShare(url){ window.open(url, '_blank', 'noopener'); }
-async function copyText(){
-  if (!P) return;
-  const t = shareText();
-  try { await navigator.clipboard.writeText(t); }
-  catch (e) {
-    const ta = document.createElement('textarea'); ta.value = t; document.body.appendChild(ta); ta.select();
-    try { document.execCommand('copy'); } catch (_) {}
-    ta.remove();
+
+  function shareText(){
+    const d = shareData();
+    return `🔮 ดวงวันนี้${d.name ? 'ของ' + d.name : 'ของฉัน'} (${d.date})\n${d.mood}\n`
+      + `${d.zod[1]} ราศี${d.zod[0]} · เกิดวัน${d.born.n} · เลขชีวิต ${d.lp} · ปี${d.animal[0]}\n`
+      + d.stars.map(s => `${s[0]} ${starStr(s[1])}`).join('\n')
+      + `\nสีเสริมงาน: ${d.colors[0][1].c} · สีเสริมเงิน: ${d.colors[1][1].c}`
+      + (siteURL() ? `\nดูดวงของคุณได้ที่ ${siteURL()}` : '');
   }
-  shareMsg('✅ คัดลอกข้อความแล้ว นำไปวางในโพสต์ได้เลย');
-}
+  function notReady(){
+    if (shareReady) return false;
+    drawShare(); shareMsg('กำลังสร้างรูป กรุณากดอีกครั้ง', 'mid');
+    return true;
+  }
+  function saveImage(){
+    if (notReady()) return;
+    const cv = $('#shareCanvas'); if(!cv) return;
+    const a = document.createElement('a');
+    a.href = cv.toDataURL('image/png');
+    a.download = `ดวงวันนี้-${new Date().toISOString().slice(0, 10)}.png`;
+    document.body.appendChild(a); a.click(); a.remove();
+    shareMsg('✅ บันทึกรูปแล้ว');
+  }
+  function shareImage(){
+    if (notReady()) return;
+    if (shareFile && navigator.canShare && navigator.canShare({files: [shareFile]})){
+      navigator.share({files: [shareFile], text: shareText()})
+        .then(() => shareMsg('✅ แชร์เรียบร้อย'))
+        .catch(e => { if (!e || e.name !== 'AbortError') shareMsg('แชร์ไม่สำเร็จ ลองกด “บันทึกรูป” แทน', 'mid'); });
+    } else {
+      saveImage();
+      shareMsg('ระบบบันทึกรูปให้คุณเรียบร้อยแล้ว', 'mid');
+    }
+  }
+  function openShare(url){ window.open(url, '_blank', 'noopener'); }
+  async function copyText(){
+    if (!P) return;
+    const t = shareText();
+    try { await navigator.clipboard.writeText(t); }
+    catch (e) {
+      const ta = document.createElement('textarea'); ta.value = t; document.body.appendChild(ta); ta.select();
+      try { document.execCommand('copy'); } catch (_) {}
+      ta.remove();
+    }
+    shareMsg('✅ คัดลอกข้อความแล้ว');
+  }
 
-/* ================= ระบบแท็บ ================= */
-const TABS = ['home','seven','taksa','zodiac','num','chinese','tarot','dream','palm','share'];
-function showTab(id){
-  if (TABS.indexOf(id) < 0) id = 'home';
-  document.querySelectorAll('main section').forEach(s => s.classList.toggle('active', s.id === id));
-  document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('active', b.dataset.tab === id));
-  if (id !== 'palm') stopCam();
-  if (id === 'share') drawShare();
-  try { history.replaceState(null, '', '#' + id); } catch (e) {}
-  const btn = document.querySelector(`#tabs button[data-tab="${id}"]`);
-  if (btn && btn.scrollIntoView) { try { btn.scrollIntoView({block: 'nearest', inline: 'center'}); } catch (e) {} }
-  scrollTop();
-}
+  /* ================= ระบบแท็บ ================= */
+  const TABS = ['home','seven','taksa','zodiac','num','chinese','tarot','dream','palm','share'];
+  function showTab(id){
+    if (TABS.indexOf(id) < 0) id = 'home';
+    document.querySelectorAll('main section').forEach(s => s.classList.toggle('active', s.id === id));
+    document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('active', b.dataset.tab === id));
+    if (id !== 'palm') stopCam();
+    if (id === 'share') drawShare();
+    try { history.replaceState(null, '', '#' + id); } catch (e) {}
+    const btn = document.querySelector(`#tabs button[data-tab="${id}"]`);
+    if (btn && btn.scrollIntoView) { try { btn.scrollIntoView({block: 'nearest', inline: 'center'}); } catch (e) {} }
+    scrollTop();
+  }
 
-/* ================= ฟอร์มโปรไฟล์ ================= */
-function fillSelects(){
-  $('#pMonth').innerHTML = TMONTH.map((m, i) => `<option value="${i+1}">เดือน${m} (${i+1})</option>`).join('');
-  $('#pYear').innerHTML = ANIMAL.map((a, i) => `<option value="${i}">ปี${a[0]} (${a[1]})</option>`).join('');
-  $('#zSel').innerHTML = ZOD.map((z, i) => `<option value="${i}">${z[1]} ราศี${z[0]}</option>`).join('');
-}
-function autoFillLunar(){
-  const v = $('#pBirth').value; if (!v) return;
-  const [y, m, d] = v.split('-').map(Number);
-  $('#pMonth').value = (m % 12) + 1;
-  const ty = (m < 4 || (m === 4 && d < 13)) ? y - 1 : y;
-  $('#pYear').value = mod(ty - 4, 12);
-}
-function saveProfile(){
-  const birth = $('#pBirth').value;
-  if (!birth) { formMsg('⚠️ กรุณาเลือกวันเกิดก่อน', 'bad'); return; }
-  P = {name: $('#pName').value.trim(), birth, time: $('#pTime').value, month: +$('#pMonth').value, year: +$('#pYear').value};
-  try { store.setItem(KEY, JSON.stringify(P)); } catch (e) {}
-  shareReady = false;
+  /* ================= ฟอร์มโปรไฟล์ ================= */
+  function fillSelects(){
+    const mSel = $('#pMonth'), ySel = ANIMAL && $('#pYear'), zSel = $('#zSel');
+    if (mSel) mSel.innerHTML = TMONTH.map((m, i) => `<option value="${i+1}">เดือน${m} (${i+1})</option>`).join('');
+    if (ySel) ySel.innerHTML = ANIMAL.map((a, i) => `<option value="${i}">ปี${a[0]} (${a[1]})</option>`).join('');
+    if (zSel) zSel.value = '0';
+  }
+  function autoFillLunar(){
+    const bIn = $('#pBirth');
+    if (!bIn || !bIn.value) return;
+    const [y, m, d] = bIn.value.split('-').map(Number);
+    const mSel = $('#pMonth'), ySel = $('#pYear');
+    if (mSel) mSel.value = (m % 12) + 1;
+    const ty = (m < 4 || (m === 4 && d < 13)) ? y - 1 : y;
+    if (ySel) ySel.value = mod(ty - 4, 12);
+  }
+  function saveProfile(){
+    const bIn = $('#pBirth'), nIn = $('#pName'), tIn = $('#pTime'), mSel = $('#pMonth'), ySel = $('#pYear');
+    if (!bIn || !bIn.value) { formMsg('⚠️ กรุณาเลือกวันเกิดก่อน', 'bad'); return; }
+    P = {
+      name: nIn ? nIn.value.trim() : '',
+      birth: bIn.value,
+      time: tIn ? tIn.value : '',
+      month: mSel ? +mSel.value : 1,
+      year: ySel ? +ySel.value : 0
+    };
+    try { store.setItem(KEY, JSON.stringify(P)); } catch (e) {}
+    shareReady = false;
+    renderAll();
+    formMsg('✅ บันทึกแล้ว เลือกเมนูด้านบนเพื่อดูดวงแต่ละศาสตร์ได้เลย');
+    scrollTop();
+  }
+  let clearArmed = false, clearTimer = null;
+  function clearProfile(){
+    const b = $('#clearBtn');
+    if (!b) return;
+    if (!clearArmed){
+      clearArmed = true; b.textContent = 'กดอีกครั้งเพื่อยืนยัน';
+      clearTimer = setTimeout(() => { clearArmed = false; b.textContent = 'ล้างข้อมูล'; }, 3000);
+      return;
+    }
+    clearTimeout(clearTimer); clearArmed = false; b.textContent = 'ล้างข้อมูล';
+    try { store.removeItem(KEY); } catch (e) {}
+    P = null; shareReady = false;
+    ['#pName','#pBirth','#pTime'].forEach(s => { const el = $(s); if(el) el.value = ''; });
+    renderAll();
+    formMsg('ล้างข้อมูลเรียบร้อย', 'muted');
+  }
+
+  function renderAll(){
+    [renderToday, renderSeven, renderTaksa, renderZodiac, renderNum, renderChinese].forEach(fn => {
+      try { fn(); } catch (e) { console.error(e); }
+    });
+  }
+
+  /* ================= ผูกปุ่มทั้งหมด ================= */
+  document.addEventListener('click', e => {
+    const tab = e.target.closest('#tabs button[data-tab]');
+    if (tab) { showTab(tab.dataset.tab); return; }
+    const go = e.target.closest('[data-goto]');
+    if (go) { showTab(go.dataset.goto); return; }
+    const f = e.target.closest('.fmt');
+    if (f){
+      shareFmt = f.dataset.fmt;
+      document.querySelectorAll('.fmt').forEach(b => b.classList.toggle('ghost', b !== f));
+      drawShare();
+      return;
+    }
+  });
+
+  on('#saveBtn', 'click', saveProfile);
+  on('#clearBtn', 'click', clearProfile);
+  on('#pBirth', 'change', autoFillLunar);
+  on('#zSel', 'change', renderDaily);
+  on('#tBtn', 'click', drawTarot);
+  on('#dBtn', 'click', readDream);
+  on('#palmBtn', 'click', readPalm);
+  on('#camBtn', 'click', openCamera);
+  on('#retakeBtn', 'click', openCamera);
+  on('#camShot', 'click', takeShot);
+  on('#camClose', 'click', () => { stopCam(); camMsg(''); });
+  on('#camFlip', 'click', () => { camFacing = camFacing === 'environment' ? 'user' : 'environment'; startCam(); });
+  on('#fileGallery', 'change', handleFile);
+  on('#fileCamera', 'change', handleFile);
+  on('#delImgBtn', 'click', deletePalm);
+  on('#shImg', 'click', shareImage);
+  on('#shSave', 'click', saveImage);
+  on('#shCopy', 'click', copyText);
+  on('#shLine', 'click', () => { if (P) openShare('https://line.me/R/share?text=' + encodeURIComponent(shareText())); });
+  on('#shX', 'click', () => { if (P) openShare('https://twitter.com/intent/tweet?text=' + encodeURIComponent(shareText())); });
+  on('#shFb', 'click', () => {
+    if (!siteURL()) { shareMsg('Facebook แชร์ได้เฉพาะลิงก์เว็บออนไลน์ — ใช้ปุ่ม “แชร์รูป” หรือ “บันทึกรูป” แทน', 'mid'); return; }
+    openShare('https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(siteURL()));
+  });
+  document.addEventListener('visibilitychange', () => { if (document.hidden) stopCam(); });
+
+  /* ================= เริ่มต้นระบบ ================= */
+  fillSelects();
+  buildPalm();
+  if (P){
+    const nEl = $('#pName'), bEl = $('#pBirth'), tEl = $('#pTime'), mEl = $('#pMonth'), yEl = $('#pYear');
+    if(nEl) nEl.value = P.name || '';
+    if(bEl) bEl.value = P.birth || '';
+    if(tEl) tEl.value = P.time || '';
+    if(mEl) mEl.value = P.month || 1;
+    if(yEl) yEl.value = P.year != null ? P.year : 0;
+  }
   renderAll();
-  formMsg('✅ บันทึกแล้ว เลือกเมนูด้านบนเพื่อดูดวงแต่ละศาสตร์ได้เลย');
-  scrollTop();
-}
-let clearArmed = false, clearTimer = null;
-function clearProfile(){
-  const b = $('#clearBtn');
-  if (!clearArmed){
-    clearArmed = true; b.textContent = 'กดอีกครั้งเพื่อยืนยัน';
-    clearTimer = setTimeout(() => { clearArmed = false; b.textContent = 'ล้างข้อมูล'; }, 3000);
-    return;
-  }
-  clearTimeout(clearTimer); clearArmed = false; b.textContent = 'ล้างข้อมูล';
-  try { store.removeItem(KEY); } catch (e) {}
-  P = null; shareReady = false;
-  ['#pName','#pBirth','#pTime'].forEach(s => { $(s).value = ''; });
-  renderAll();
-  formMsg('ล้างข้อมูลเรียบร้อย', 'muted');
-}
-
-function renderAll(){
-  [renderToday, renderSeven, renderTaksa, renderZodiac, renderNum, renderChinese].forEach(fn => {
-    try { fn(); } catch (e) { console.error(e); }
-  });
-}
-
-/* ================= ผูกปุ่มทั้งหมด ================= */
-document.addEventListener('click', e => {
-  const tab = e.target.closest('#tabs button[data-tab]');
-  if (tab) { showTab(tab.dataset.tab); return; }
-  const go = e.target.closest('[data-goto]');
-  if (go) showTab(go.dataset.goto);
-  const f = e.target.closest('.fmt');
-  if (f){
-    shareFmt = f.dataset.fmt;
-    document.querySelectorAll('.fmt').forEach(b => b.classList.toggle('ghost', b !== f));
-    drawShare();
-  }
+  const initTab = (location.hash || '').slice(1) || 'home';
+  showTab(initTab);
 });
-on('#saveBtn', 'click', saveProfile);
-on('#clearBtn', 'click', clearProfile);
-on('#pBirth', 'change', autoFillLunar);
-on('#zSel', 'change', renderDaily);
-on('#tBtn', 'click', drawTarot);
-on('#dBtn', 'click', readDream);
-on('#palmBtn', 'click', readPalm);
-on('#camBtn', 'click', openCamera);
-on('#retakeBtn', 'click', openCamera);
-on('#camShot', 'click', takeShot);
-on('#camClose', 'click', () => { stopCam(); camMsg(''); });
-on('#camFlip', 'click', () => { camFacing = camFacing === 'environment' ? 'user' : 'environment'; startCam(); });
-on('#fileGallery', 'change', handleFile);
-on('#fileCamera', 'change', handleFile);
-on('#delImgBtn', 'click', deletePalm);
-on('#shImg', 'click', shareImage);
-on('#shSave', 'click', saveImage);
-on('#shCopy', 'click', copyText);
-on('#shLine', 'click', () => { if (P) openShare('https://line.me/R/share?text=' + encodeURIComponent(shareText())); });
-on('#shX', 'click', () => { if (P) openShare('https://twitter.com/intent/tweet?text=' + encodeURIComponent(shareText())); });
-on('#shFb', 'click', () => {
-  if (!siteURL()) { shareMsg('Facebook แชร์ได้เฉพาะลิงก์เว็บออนไลน์ — ใช้ปุ่ม “แชร์รูป” หรือ “บันทึกรูป” แทน', 'mid'); return; }
-  openShare('https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(siteURL()));
-});
-document.addEventListener('visibilitychange', () => { if (document.hidden) stopCam(); });
-
-/* ================= เริ่มต้น ================= */
-fillSelects();
-buildPalm();
-if (P){
-  $('#pName').value = P.name || ''; $('#pBirth').value = P.birth \vert{}\vert{} ''; $('#pTime').value = P.time || '';
-  $('#pMonth').value = P.month \vert{}\vert{} 1; $('#pYear').value = (P.year != null ? P.year : 0);
-}
-renderAll();
-showTab((location.hash || '').slice(1) || 'home');
 </script>
 </body>
 </html>
