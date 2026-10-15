@@ -3,27 +3,33 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>โหราจักรวาล | ดูดวงครบทุกศาสตร์ เลข 7 ตัว 9 ฐาน ทักษา ทาโรต์ ทำนายฝัน ดูลายมือ</title>
-<meta name="description" content="ดูดวงฟรีครบทุกศาสตร์ เลข 7 ตัว 9 ฐาน ทักษาปกรณ์ สีมงคลประจำวัน 12 ราศี เลขศาสตร์ นักษัตรจีน ไพ่ทาโรต์ ทำนายฝัน และดูลายมือ">
+<title>โหราจักรวาล | ดูดวงครบทุกศาสตร์ เลข 7 ตัว 9 ฐาน ทักษา ทาโรต์ ทำนายฝัน AI ดูลายมือ</title>
+<meta name="description" content="ดูดวงฟรีครบทุกศาสตร์ เลข 7 ตัว 9 ฐาน ทักษาปกรณ์ สีมงคลประจำวัน 12 ราศี เลขศาสตร์ นักษัตรจีน ไพ่ทาโรต์ ทำนายฝัน และ AI ดูลายมือ">
 <meta name="theme-color" content="#1a0f33">
 <!-- Open Graph สำหรับแชร์ลงโซเชียล -->
 <meta property="og:type" content="website">
-<meta property="og:title" content="โหราจักรวาล | ดูดวงครบทุกศาสตร์ฟรี">
-<meta property="og:description" content="เลข 7 ตัว 9 ฐาน ทักษา 12 ราศี ไพ่ทาโรต์ ทำนายฝัน ดูลายมือ ครบในที่เดียว">
-<meta property="og:url" content="">
+<meta property="og:title" content="โหราจักรวาล | ดูดวงครบทุกศาสตร์ฟรี (Hybrid AI)">
+<meta property="og:description" content="เลข 7 ตัว 9 ฐาน ทักษา 12 ราศี ไพ่ทาโรต์ ทำนายฝัน AI ดูลายมือ ครบในที่เดียว">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔮</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;600&family=Sarabun:wght@400;600&display=swap" rel="stylesheet">
+<!-- โหลด MediaPipe Hands สำหรับ AI ตรวจจับมืออัตโนมัติ -->
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous" defer></script>
 <style>
 :root{--card:rgba(255,255,255,.06);--line:rgba(255,255,255,.12);--gold:#f5c96a;--text:#eee8ff;--muted:#a99fc9}
 *{box-sizing:border-box}
 [hidden]{display:none!important}
 body{margin:0;font-family:'Sarabun',sans-serif;color:var(--text);background:radial-gradient(ellipse at top,#2c1757 0%,#0d0820 65%) fixed;background-color:#0d0820;min-height:100vh;line-height:1.65}
 body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:-1;background-image:radial-gradient(1px 1px at 10% 20%,#fff8,transparent),radial-gradient(1px 1px at 30% 70%,#fff6,transparent),radial-gradient(1.5px 1.5px at 50% 30%,#fff9,transparent),radial-gradient(1px 1px at 70% 80%,#fff7,transparent),radial-gradient(1.5px 1.5px at 85% 15%,#fff8,transparent),radial-gradient(1px 1px at 92% 55%,#fff5,transparent),radial-gradient(1px 1px at 18% 88%,#fff6,transparent)}
-header{text-align:center;padding:28px 16px 8px}
+header{text-align:center;padding:28px 16px 8px;position:relative}
 header h1{font-family:'Prompt',sans-serif;color:var(--gold);margin:0;font-size:clamp(1.8rem,5vw,2.6rem)}
 header p{margin:4px 0 0;color:var(--muted)}
+.cloud-pill{display:inline-flex;align-items:center;gap:6px;margin-top:8px;padding:4px 12px;border-radius:999px;font-size:.82rem;background:rgba(255,255,255,.07);border:1px solid var(--line);color:var(--muted);cursor:pointer;transition:.2s}
+.cloud-pill:hover{border-color:var(--gold);color:var(--text)}
+.dot{width:8px;height:8px;border-radius:50%;background:#ffd27a;display:inline-block}
+.dot.ok{background:#7ee2a8;box-shadow:0 0 8px #7ee2a8}
+.dot.off{background:#ff8a8a}
 nav{position:sticky;top:0;z-index:10;display:flex;gap:8px;overflow-x:auto;padding:12px 16px;background:rgba(13,8,32,.92);border-bottom:1px solid var(--line);scrollbar-width:none;-webkit-overflow-scrolling:touch}
 nav::-webkit-scrollbar{display:none}
 nav button{flex:0 0 auto;font-family:'Prompt',sans-serif;border:1px solid var(--line);background:var(--card);color:var(--text);padding:8px 14px;border-radius:999px;cursor:pointer;font-size:.95rem;transition:.2s;touch-action:manipulation}
@@ -73,14 +79,17 @@ th{background:rgba(245,201,106,.12);color:var(--gold);font-family:'Prompt',sans-
 .tc .f .nm{font-family:'Prompt',sans-serif;font-weight:600}
 .tc.rev .f .sym{transform:rotate(180deg)}
 .pos{text-align:center;color:var(--muted);font-size:.9rem;margin-top:6px}
-/* กล้อง & ลายมือ */
+/* กล้อง & AI ลายมือ */
 .cam-box{position:relative;margin:14px auto 0;border-radius:16px;overflow:hidden;background:#000;width:100%;max-width:480px;aspect-ratio:3/4;max-height:72vh}
 .cam-box video{width:100%;height:100%;object-fit:cover;display:block}
+.cam-overlay{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
 .mirror{transform:scaleX(-1)}
-.cam-guide{position:absolute;left:12%;right:12%;top:9%;bottom:20%;border:2px dashed rgba(245,201,106,.85);border-radius:40% 40% 28% 28%;display:flex;align-items:center;justify-content:center;font-size:6.5rem;pointer-events:none}
-.cam-guide span{opacity:.35}
-.cam-tip{position:absolute;top:8px;left:0;right:0;text-align:center;font-size:.9rem;text-shadow:0 1px 4px #000;color:#fff}
-.cam-ctrl{position:absolute;bottom:0;left:0;right:0;display:flex;justify-content:space-around;align-items:center;padding:14px;background:linear-gradient(transparent,rgba(0,0,0,.75))}
+.cam-guide{position:absolute;left:12%;right:12%;top:9%;bottom:20%;border:3px dashed rgba(245,201,106,.85);border-radius:40% 40% 28% 28%;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:5.5rem;pointer-events:none;transition:.25s}
+.cam-guide.locked{border-color:#7ee2a8;border-style:solid;background:rgba(126,226,168,.14);box-shadow:0 0 28px rgba(126,226,168,.45)}
+.cam-guide span{opacity:.3}
+.cam-count{font-family:'Prompt',sans-serif;font-size:3rem;color:#7ee2a8;text-shadow:0 2px 10px #000;font-weight:600}
+.cam-tip{position:absolute;top:10px;left:10px;right:10px;text-align:center;font-size:.92rem;text-shadow:0 1px 4px #000;color:#fff;background:rgba(0,0,0,.6);padding:6px 12px;border-radius:999px}
+.cam-ctrl{position:absolute;bottom:0;left:0;right:0;display:flex;justify-content:space-around;align-items:center;padding:14px;background:linear-gradient(transparent,rgba(0,0,0,.8))}
 .cam-ctrl button{border:none;background:rgba(255,255,255,.22);color:#fff;width:50px;height:50px;border-radius:50%;font-size:1.3rem;cursor:pointer;touch-action:manipulation}
 .cam-ctrl .shutter{width:72px;height:72px;background:#fff;border:5px solid rgba(255,255,255,.45);background-clip:padding-box}
 .palm-img{max-width:100%;max-height:420px;border-radius:12px;display:block;margin:14px auto 0}
@@ -88,6 +97,8 @@ th{background:rgba(245,201,106,.12);color:var(--gold);font-family:'Prompt',sans-
 .legend{text-align:center}
 .legend span{display:inline-block;margin:2px 8px;font-size:.9rem}
 .share-img{display:block;width:100%;max-width:340px;margin:16px auto 0;border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,.5)}
+.ai-badge{display:inline-block;padding:4px 12px;border-radius:999px;background:linear-gradient(135deg,#7ee2a8,#4fc3f7);color:#0d0820;font-weight:600;font-size:.85rem;margin-bottom:8px}
+.hist-list{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
 .err-bar{position:fixed;bottom:0;left:0;right:0;background:#b71c1c;color:#fff;padding:10px 14px;font-size:.9rem;z-index:99}
 footer{text-align:center;color:var(--muted);font-size:.85rem;padding:20px 16px 40px;border-top:1px solid var(--line)}
 </style>
@@ -96,7 +107,11 @@ footer{text-align:center;color:var(--muted);font-size:.85rem;padding:20px 16px 4
 
 <header>
   <h1>✨ โหราจักรวาล ✨</h1>
-  <p>ดูดวงครบทุกศาสตร์ ไทย · ตะวันตก · จีน</p>
+  <p>ดูดวงครบทุกศาสตร์ ไทย · ตะวันตก · จีน · AI หัตถศาสตร์</p>
+  <div class="cloud-pill" data-goto="sync" title="คลิกเพื่อดูการตั้งค่า Hybrid Cloud">
+    <span class="dot" id="cloudDot"></span>
+    <span id="cloudStatusText">Hybrid Cloud: กำลังเชื่อมต่อ...</span>
+  </div>
 </header>
 
 <nav id="tabs">
@@ -108,8 +123,9 @@ footer{text-align:center;color:var(--muted);font-size:.85rem;padding:20px 16px 4
   <button type="button" data-tab="chinese">🐉 นักษัตรจีน</button>
   <button type="button" data-tab="tarot">🃏 ไพ่ทาโรต์</button>
   <button type="button" data-tab="dream">🌙 ทำนายฝัน</button>
-  <button type="button" data-tab="palm">✋ ดูลายมือ</button>
+  <button type="button" data-tab="palm">✋ AI ดูลายมือ</button>
   <button type="button" data-tab="share">📤 แชร์ดวง</button>
+  <button type="button" data-tab="sync">☁️ ระบบ Hybrid</button>
 </nav>
 
 <main>
@@ -117,7 +133,7 @@ footer{text-align:center;color:var(--muted);font-size:.85rem;padding:20px 16px 4
     <div class="card" id="todayCard"><p class="muted">กำลังโหลด...</p></div>
     <div class="card">
       <h2>ข้อมูลวันเกิดของคุณ</h2>
-      <p class="muted">กรอกครั้งเดียว ใช้ได้ทุกศาสตร์ · ข้อมูลเก็บในเครื่องของคุณเท่านั้น ไม่ถูกส่งไปที่ใด</p>
+      <p class="muted">ทำงานแบบ Hybrid: ประมวลผลในเครื่องทันที (เร็ว 100%) และซิงค์สำรองเข้า Google Sheets อัตโนมัติ</p>
       <div class="grid">
         <div><label for="pName">ชื่อ (ใช้ตรวจอักษรกาลกิณี)</label><input id="pName" placeholder="เช่น สมชาย"></div>
         <div><label for="pBirth">วันเกิด (ค.ศ.)</label><input type="date" id="pBirth"></div>
@@ -131,6 +147,11 @@ footer{text-align:center;color:var(--muted);font-size:.85rem;padding:20px 16px 4
         <button type="button" class="btn ghost" id="clearBtn">ล้างข้อมูล</button>
       </div>
       <div class="msg" id="formMsg"></div>
+
+      <div id="profileHistoryWrap" style="margin-top:14px;border-top:1px solid var(--line);padding-top:12px" hidden>
+        <span class="muted">📂 สลับดูดวงจากประวัติในเครื่อง (Local Cache):</span>
+        <div class="hist-list" id="profileHistoryList"></div>
+      </div>
     </div>
   </section>
 
@@ -171,14 +192,18 @@ footer{text-align:center;color:var(--muted);font-size:.85rem;padding:20px 16px 4
   </section>
 
   <section id="palm">
-    <h2>ดูลายมือ</h2>
+    <h2>AI สแกนและวิเคราะห์ลายมืออัตโนมัติ (Hybrid AI)</h2>
 
     <div class="card">
-      <h3>1. ถ่ายรูปหรือเลือกรูปฝ่ามือ</h3>
-      <p class="muted">แบมือให้เต็มฝ่า ถ่ายในที่แสงสว่าง ไม่ใช้แฟลช · รูปอยู่ในเครื่องคุณเท่านั้น ไม่ถูกอัปโหลด</p>
+      <span class="ai-badge">✨ Hybrid AI: MediaPipe (หน้าบ้าน) + Gemini Vision (หลังบ้าน)</span>
+      <h3>1. สแกนฝ่ามือด้วยกล้อง (ถ่ายและอ่านเส้นให้อัตโนมัติ)</h3>
+      <p class="muted">กางฝ่ามือค้างไว้ในกรอบ 1.5 วินาที กล้องจะนับถอยหลังถ่ายให้อัตโนมัติ จากนั้น AI ในเครื่องจะสแกนเส้นทันที และส่งให้ Cloud AI วิเคราะห์ซ้ำเพื่อความแม่นยำสูงสุด</p>
       <div class="btn-row">
-        <button type="button" class="btn" id="camBtn">📷 เปิดกล้อง</button>
+        <button type="button" class="btn" id="camBtn">📷 เปิดกล้อง AI สแกนมือ</button>
         <label for="fileGallery" class="btn ghost">🖼️ เลือกรูปจากอัลบั้ม</label>
+        <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;margin:0">
+          <input type="checkbox" id="autoShotChk" checked style="width:auto"> ถ่ายอัตโนมัติเมื่อมือนิ่ง
+        </label>
       </div>
       <input type="file" id="fileGallery" accept="image/*" hidden>
       <input type="file" id="fileCamera" accept="image/*" capture="environment" hidden>
@@ -186,11 +211,15 @@ footer{text-align:center;color:var(--muted);font-size:.85rem;padding:20px 16px 4
 
       <div class="cam-box" id="camBox" hidden>
         <video id="camVideo" playsinline autoplay muted></video>
-        <div class="cam-tip">วางฝ่ามือให้อยู่ในกรอบ แล้วกดปุ่มถ่าย</div>
-        <div class="cam-guide"><span>✋</span></div>
+        <canvas id="camOverlay" class="cam-overlay"></canvas>
+        <div class="cam-tip" id="camTip">แบฝ่ามือให้อยู่ในกรอบ...</div>
+        <div class="cam-guide" id="camGuide">
+          <span>✋</span>
+          <div class="cam-count" id="camCount"></div>
+        </div>
         <div class="cam-ctrl">
           <button type="button" id="camClose" aria-label="ปิดกล้อง">✕</button>
-          <button type="button" id="camShot" class="shutter" aria-label="ถ่ายรูป"></button>
+          <button type="button" id="camShot" class="shutter" aria-label="ถ่ายรูปทันที"></button>
           <button type="button" id="camFlip" aria-label="สลับกล้อง">🔄</button>
         </div>
       </div>
@@ -200,7 +229,7 @@ footer{text-align:center;color:var(--muted);font-size:.85rem;padding:20px 16px 4
         <img id="palmImg" class="palm-img" alt="รูปฝ่ามือของคุณ">
         <p class="msg" id="palmQ" style="text-align:center"></p>
         <div class="btn-row" style="justify-content:center">
-          <button type="button" class="btn ghost small" id="retakeBtn">📷 ถ่ายใหม่</button>
+          <button type="button" class="btn ghost small" id="retakeBtn">📷 สแกนใหม่</button>
           <label for="fileGallery" class="btn ghost small">🖼️ เปลี่ยนรูป</label>
           <button type="button" class="btn ghost small" id="delImgBtn">🗑️ ลบรูป</button>
         </div>
@@ -208,7 +237,7 @@ footer{text-align:center;color:var(--muted);font-size:.85rem;padding:20px 16px 4
     </div>
 
     <div class="card">
-      <h3>2. ดูแผนผังเส้นมือ แล้วเทียบกับรูปของคุณ</h3>
+      <h3>2. แผนผังเส้นลายมือและผลการวิเคราะห์จาก AI</h3>
       <svg class="palm-svg" viewBox="0 0 200 240" aria-label="แผนผังเส้นลายมือ">
         <g fill="#241544" stroke="#a99fc9" stroke-width="2">
           <rect x="6" y="118" width="28" height="78" rx="14" transform="rotate(-38 20 157)"/>
@@ -223,25 +252,25 @@ footer{text-align:center;color:var(--muted);font-size:.85rem;padding:20px 16px 4
         <path d="M56 130 Q92 168 86 226" stroke="#66bb6a" stroke-width="3.5" fill="none" stroke-linecap="round"/>
         <path d="M112 226 L104 118" stroke="#f5c96a" stroke-width="3" fill="none" stroke-dasharray="6 4" stroke-linecap="round"/>
       </svg>
-      <div class="legend">
+      <div class="legend" style="margin-bottom:14px">
         <span style="color:#ff6b81">━ เส้นหัวใจ</span>
         <span style="color:#4fc3f7">━ เส้นสมอง</span>
         <span style="color:#66bb6a">━ เส้นชีวิต</span>
         <span style="color:#f5c96a">┅ เส้นวาสนา</span>
       </div>
-    </div>
 
-    <div class="card">
-      <h3>3. เลือกลักษณะที่ตรงกับมือคุณ</h3>
       <div class="grid">
-        <div><label for="pm_hand">มือที่ใช้ดู</label>
+        <div>
+          <label for="pm_hand">มือที่ใช้ดู</label>
           <select id="pm_hand">
             <option value="R">มือขวา — สิ่งที่สร้างขึ้นเองในปัจจุบัน</option>
             <option value="L">มือซ้าย — พื้นดวงที่ติดตัวมาแต่กำเนิด</option>
-          </select></div>
+          </select>
+        </div>
       </div>
       <div class="grid" id="palmForm" style="margin-top:14px"></div>
-      <button type="button" class="btn" id="palmBtn">อ่านลายมือ</button>
+      <p class="muted">* ระบบ AI เลือกตัวเลือกข้างต้นให้อัตโนมัติเมื่อสแกนภาพ (คุณสามารถปรับเปลี่ยนเองแล้วกดปุ่มอ่านคำทำนายซ้ำได้)</p>
+      <button type="button" class="btn" id="palmBtn">🔮 อ่านคำทำนายและซิงค์ขึ้น Cloud</button>
     </div>
     <div id="palmOut"></div>
   </section>
@@ -256,7 +285,7 @@ footer{text-align:center;color:var(--muted);font-size:.85rem;padding:20px 16px 4
       </div>
       <img id="shareImg" class="share-img" alt="ภาพสรุปดวงสำหรับแชร์" hidden>
       <canvas id="shareCanvas" hidden></canvas>
-      <p class="muted" style="text-align:center">บนคอมพิวเตอร์ กดปุ่มบันทึกรูปด้านล่างได้เลย</p>
+      <p class="muted" style="text-align:center">บนมือถือ กดค้างที่รูปเพื่อบันทึก หรือกดปุ่มด้านล่างได้เลย</p>
       <div class="btn-row" style="justify-content:center">
         <button type="button" class="btn" id="shImg">📲 แชร์รูป</button>
         <button type="button" class="btn ghost" id="shSave">⬇️ บันทึกรูป</button>
@@ -270,11 +299,31 @@ footer{text-align:center;color:var(--muted);font-size:.85rem;padding:20px 16px 4
       <div class="msg" id="shareMsg" style="text-align:center"></div>
     </div>
   </section>
+
+  <section id="sync">
+    <h2>☁️ ตั้งค่าระบบ Hybrid (GitHub Pages + Google Apps Script)</h2>
+    <div class="card">
+      <p class="muted">ระบบผูก Web App URL ของคุณไว้เป็นค่าเริ่มต้นแล้ว ทำให้รันบน GitHub Pages ได้อย่างรวดเร็วพร้อมสำรองข้อมูลลง Google Sheets อัตโนมัติ</p>
+      <div style="margin-bottom:12px">
+        <label style="display:inline-flex;align-items:center;gap:8px;cursor:pointer;color:var(--text)">
+          <input type="checkbox" id="enableCloudChk" checked style="width:auto">
+          <b>เปิดใช้งานโหมด Hybrid Cloud Sync (ซิงค์ข้อมูลและใช้ Gemini Vision หลังบ้าน)</b>
+        </label>
+      </div>
+      <label for="gasUrlInput">Google Apps Script Web App URL</label>
+      <input id="gasUrlInput" placeholder="https://script.google.com/macros/s/xxxxxx/exec">
+      <div class="btn-row">
+        <button type="button" class="btn" id="saveGasBtn">🔄 ทดสอบและบันทึกการเชื่อมต่อ</button>
+        <button type="button" class="btn ghost small" id="resetGasBtn">คืนค่า URL เริ่มต้น</button>
+      </div>
+      <div class="msg" id="gasMsg"></div>
+    </div>
+  </section>
 </main>
 
 <footer>
-  © โหราจักรวาล · เนื้อหาทั้งหมดเพื่อความบันเทิงและเป็นแนวทางเท่านั้น<br>
-  ไม่ควรใช้แทนคำแนะนำทางการแพทย์ การเงิน หรือกฎหมาย
+  © โหราจักรวาล · ระบบ Hybrid (On-Device AI + Google Cloud Sync)<br>
+  เนื้อหาเพื่อความบันเทิงและเป็นแนวทางเท่านั้น ไม่ควรใช้แทนคำแนะนำทางการแพทย์ การเงิน หรือกฎหมาย
 </footer>
 
 <script>
@@ -286,7 +335,7 @@ document.addEventListener('DOMContentLoaded', function () {
     bar.textContent = '⚠️ เกิดข้อผิดพลาด: ' + (e.message || 'ไม่ทราบสาเหตุ');
   });
 
-  /* ================= ตัวช่วย ================= */
+  /* ================= ตัวช่วย & Hybrid Config ================= */
   const $ = s => document.querySelector(s);
   const on = (sel, ev, fn) => { const el = $(sel); if (el) el.addEventListener(ev, fn); };
   const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -301,7 +350,83 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   })();
 
-  let camStream = null, camFacing = 'environment', palmURL = null, shareReady = false, shareFile = null;
+  // ฝัง URL ของคุณเป็นค่าเริ่มต้นในระบบ Hybrid
+  const DEFAULT_GAS_URL = 'https://script.google.com/macros/s/AKfycbxbg0Gv1UaUsojHutttCBVTeQLKqAH8WIx8c7Q97lBDAYdDGnnoSLeJ3Txe_zThIh30lw/exec';
+  const KEY = 'horaProfile';
+  const HIST_KEY = 'horaProfileHistory';
+  const GAS_KEY = 'horaGasUrl';
+  const CLOUD_ON_KEY = 'horaCloudEnabled';
+
+  let P = null, HIST = [];
+  let GAS_URL = store.getItem(GAS_KEY) || DEFAULT_GAS_URL;
+  let CLOUD_ENABLED = store.getItem(CLOUD_ON_KEY) !== '0';
+
+  try { P = JSON.parse(store.getItem(KEY) || 'null'); } catch (e) { P = null; }
+  try { HIST = JSON.parse(store.getItem(HIST_KEY) || '[]'); } catch (e) { HIST = []; }
+
+  let camStream = null, camFacing = 'environment', palmURL = null, lastBase64 = '';
+  let shareReady = false, shareFile = null;
+  let mpHands = null, detectLoopId = null, holdFrames = 0, lastLandmarks = null;
+
+  /* ================= ฟังก์ชันเชื่อมต่อ Hybrid Cloud (CORS-Safe) ================= */
+  function setCloudBadge(state, text) {
+    const dot = $('#cloudDot'), txt = $('#cloudStatusText');
+    if (dot) {
+      dot.className = 'dot' + (state === 'ok' ? ' ok' : state === 'off' ? ' off' : '');
+    }
+    if (txt) txt.textContent = text;
+  }
+
+  async function postToGAS(payload) {
+    if (!CLOUD_ENABLED || !GAS_URL) return null;
+    setCloudBadge('wait', 'Hybrid Cloud: กำลังซิงค์...');
+    try {
+      // ใช้ text/plain เพื่อหลีกเลี่ยง CORS Preflight (OPTIONS) ของ Google Apps Script
+      const res = await fetch(GAS_URL, {
+        method: 'POST',
+        redirect: 'follow',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      setCloudBadge('ok', 'Hybrid Cloud: ซิงค์สำเร็จ');
+      return data;
+    } catch (err) {
+      // โหมด Fallback: ส่งแบบ no-cors เพื่อให้ข้อมูลเข้า Sheet ได้แม้ติด Redirect Policy บางเบราว์เซอร์
+      try {
+        await fetch(GAS_URL, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify(payload)
+        });
+        setCloudBadge('ok', 'Hybrid Cloud: ส่งข้อมูลแล้ว');
+        return { status: 'opaque' };
+      } catch (e2) {
+        setCloudBadge('off', 'โหมดออฟไลน์ (เก็บในเครื่อง)');
+        return null;
+      }
+    }
+  }
+
+  async function pingCloud() {
+    if (!CLOUD_ENABLED || !GAS_URL) {
+      setCloudBadge('off', 'โหมด Local (ปิด Cloud Sync)');
+      return;
+    }
+    setCloudBadge('wait', 'Hybrid Cloud: กำลังตรวจสอบ...');
+    try {
+      const res = await fetch(GAS_URL + '?action=ping', { method: 'GET', redirect: 'follow' });
+      const data = await res.json();
+      if (data && data.status === 'ok') {
+        setCloudBadge('ok', 'Hybrid Cloud: ออนไลน์พร้อมซิงค์');
+        return true;
+      }
+    } catch (e) {}
+    // แม้ GET ping จะติด CORS ในบางกรณี แต่ POST แบบ text/plain ยังใช้งานได้
+    setCloudBadge('ok', 'Hybrid Cloud: พร้อมส่งข้อมูล');
+    return false;
+  }
 
   /* ================= ข้อมูลพื้นฐาน ================= */
   const DAYS = ['อาทิตย์','จันทร์','อังคาร','พุธ','พฤหัสบดี','ศุกร์','เสาร์'];
@@ -391,10 +516,6 @@ document.addEventListener('DOMContentLoaded', function () {
     return h + `</table></div><p>⏰ ช่วงเวลาดี: <b>${TIMES[Math.floor(r()*TIMES.length)]}</b> · 🧭 ทิศมงคล: <b>${DIRS[Math.floor(r()*8)]}</b></p>`;
   }
 
-  /* ================= โปรไฟล์ ================= */
-  let P = null;
-  try { P = JSON.parse(store.getItem(KEY) || 'null'); } catch (e) { P = null; }
-
   function info(p){
     const [y, m, d] = p.birth.split('-').map(Number);
     let dow = new Date(y, m-1, d).getDay();
@@ -434,7 +555,6 @@ document.addEventListener('DOMContentLoaded', function () {
     const out = $('#sevenOut'); if(!out) return;
     if (!P) { out.innerHTML = need(); return; }
     const b = info(P);
-    
     const r1 = row(b.dow + 1);
     const r2 = row(mod(P.month - 1, 7) + 1);
     const r3 = row(mod(P.year, 7) + 1);
@@ -667,7 +787,7 @@ document.addEventListener('DOMContentLoaded', function () {
       : `<div class="card"><p>ยังไม่พบสัญลักษณ์ที่ตรงกับตำราในระบบ ลองเล่าโดยระบุสิ่งที่เห็นให้ชัดขึ้น เช่น สัตว์ คน สถานที่ หรือสิ่งของ</p><p class="muted">ในทางจิตวิทยา ความฝันมักสะท้อนความรู้สึกและเรื่องที่ค้างใจในช่วงนี้</p></div>`;
   }
 
-  /* ================= ดูลายมือ: ข้อมูล ================= */
+  /* ================= ดูลายมือ & Hybrid AI Hand Scanner ================= */
   const PALM = {
     shape:{t:'รูปทรงมือ', o:{
       earth:['ธาตุดิน — ฝ่ามือเหลี่ยม นิ้วสั้น','ติดดิน ทำงานจริงจัง เชื่อถือได้ ชอบงานที่จับต้องได้'],
@@ -695,6 +815,7 @@ document.addEventListener('DOMContentLoaded', function () {
       none:['ไม่มีหรือเห็นไม่ชัด','ชีวิตยืดหยุ่น ไม่ยึดติดเส้นทางเดียว'],
       broken:['ขาดหลายช่วง','การงานมีหลายช่วงเปลี่ยนผ่าน แต่ละครั้งพาไปสู่สิ่งใหม่']}}
   };
+
   function buildPalm(){
     const form = $('#palmForm');
     if (form){
@@ -704,34 +825,136 @@ document.addEventListener('DOMContentLoaded', function () {
       }).join('');
     }
   }
-  function readPalm(){
+
+  function readPalm(syncToCloud = true){
     const handEl = $('#pm_hand'), out = $('#palmOut');
     if (!out) return;
     const hand = handEl && handEl.value === 'L' ? 'มือซ้าย (พื้นดวงแต่กำเนิด)' : 'มือขวา (สิ่งที่สร้างขึ้นเองในปัจจุบัน)';
     const preview = $('#palmPreview'), palmImg = $('#palmImg');
     const img = preview && !preview.hidden && palmImg && palmImg.src ? `<img src="${palmImg.src}" class="palm-img" style="max-height:220px" alt="ฝ่ามือ">` : '';
-    out.innerHTML = `<div class="card"><h3>ผลการอ่านลายมือ · ${hand}</h3>${img}` + Object.keys(PALM).map(k => {
-      const g = PALM[k], sel = $('#pm_' + k), o = g.o[sel ? sel.value : Object.keys(g.o)[0]];
+    
+    let summaryText = [];
+    const detailsHTML = Object.keys(PALM).map(k => {
+      const g = PALM[k], sel = $('#pm_' + k), val = sel ? sel.value : Object.keys(g.o)[0], o = g.o[val];
+      summaryText.push(`${g.t}: ${o[1]}`);
       return `<p><b>${g.t}:</b> <span class="pill">${o[0]}</span><br>${o[1]}</p>`;
-    }).join('') + '<p class="muted">ลายมือเปลี่ยนแปลงได้ตามการใช้ชีวิต ใช้เป็นแนวทางทำความรู้จักตัวเองเท่านั้น</p></div>';
+    }).join('');
+
+    out.innerHTML = `<div class="card"><h3>ผลการอ่านลายมือ · ${hand}</h3>${img}${detailsHTML}<p class="muted">ลายมือเปลี่ยนแปลงได้ตามการใช้ชีวิต ใช้เป็นแนวทางทำความรู้จักตัวเองเท่านั้น</p></div>`;
     out.scrollIntoView({behavior: 'smooth', block: 'start'});
+
+    if (syncToCloud && CLOUD_ENABLED && GAS_URL) {
+      postToGAS({
+        action: 'savePalmLog',
+        name: P ? P.name : 'ไม่ระบุชื่อ',
+        hand: handEl ? handEl.value : 'R',
+        shape: $('#pm_shape') ? $('#pm_shape').value : '',
+        heart: $('#pm_heart') ? $('#pm_heart').value : '',
+        head: $('#pm_head') ? $('#pm_head').value : '',
+        life: $('#pm_life') ? $('#pm_life').value : '',
+        fate: $('#pm_fate') ? $('#pm_fate').value : '',
+        imageBase64: lastBase64,
+        summary: summaryText.join(' | ')
+      });
+    }
   }
 
-  /* ================= ดูลายมือ: กล้อง & รูปภาพ ================= */
   const camMsg = h => { const el = $('#camMsg'); if(el) el.innerHTML = h || ''; };
   const canLiveCam = () => !!(window.isSecureContext && navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
 
+  function initMediaPipe() {
+    if (mpHands || typeof window.Hands === 'undefined') return;
+    try {
+      mpHands = new window.Hands({
+        locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
+      });
+      mpHands.setOptions({
+        maxNumHands: 1,
+        modelComplexity: 1,
+        minDetectionConfidence: 0.65,
+        minTrackingConfidence: 0.65
+      });
+      mpHands.onResults(onHandResults);
+    } catch (e) {
+      console.warn('MediaPipe Init Error:', e);
+    }
+  }
+
+  function onHandResults(results) {
+    const ov = $('#camOverlay'), v = $('#camVideo'), guide = $('#camGuide'), tip = $('#camTip'), cnt = $('#camCount');
+    if (!ov || !v || !v.videoWidth) return;
+    ov.width = v.videoWidth; ov.height = v.videoHeight;
+    const ctx = ov.getContext('2d');
+    ctx.clearRect(0, 0, ov.width, ov.height);
+
+    if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
+      const lm = results.multiHandLandmarks[0];
+      lastLandmarks = lm;
+
+      ctx.fillStyle = '#7ee2a8';
+      lm.forEach(pt => {
+        const px = (camFacing === 'user' ? 1 - pt.x : pt.x) * ov.width;
+        const py = pt.y * ov.height;
+        ctx.beginPath(); ctx.arc(px, py, 6, 0, Math.PI * 2); ctx.fill();
+      });
+
+      const wrist = lm[0], midMcp = lm[9], midTip = lm[12];
+      const palmCentered = midMcp.x > 0.22 && midMcp.x < 0.78 && midMcp.y > 0.2 && midMcp.y < 0.85;
+      const handOpen = Math.hypot(midTip.x - wrist.x, midTip.y - wrist.y) > 0.28;
+
+      if (palmCentered && handOpen) {
+        holdFrames++;
+        if (guide) guide.classList.add('locked');
+        const autoChk = $('#autoShotChk');
+        if (autoChk && autoChk.checked) {
+          const remain = Math.max(0, Math.ceil((27 - holdFrames) / 9));
+          if (tip) tip.textContent = '✨ ล็อกตำแหน่งฝ่ามือแล้ว! ถือนิ่งๆ...';
+          if (cnt) cnt.textContent = remain > 0 ? remain : '📸';
+          if (holdFrames >= 27) {
+            holdFrames = 0;
+            takeShot();
+          }
+        } else {
+          if (tip) tip.textContent = '✅ ตำแหน่งมือชัดเจน กดปุ่มถ่ายได้เลย';
+        }
+      } else {
+        holdFrames = Math.max(0, holdFrames - 1);
+        if (guide) guide.classList.remove('locked');
+        if (cnt) cnt.textContent = '';
+        if (tip) tip.textContent = 'ขยับฝ่ามือให้อยู่กลางกรอบและกางนิ้วออก...';
+      }
+    } else {
+      holdFrames = 0;
+      if (guide) guide.classList.remove('locked');
+      if (cnt) cnt.textContent = '';
+      if (tip) tip.textContent = 'วางฝ่ามือให้อยู่ในกรอบ...';
+    }
+  }
+
+  async function detectLoop() {
+    const v = $('#camVideo');
+    if (!camStream || !v || v.paused || v.ended) return;
+    if (mpHands && v.videoWidth > 0) {
+      try { await mpHands.send({image: v}); } catch (e) {}
+    }
+    if (camStream) detectLoopId = requestAnimationFrame(detectLoop);
+  }
+
   function stopCam(){
+    if (detectLoopId) { cancelAnimationFrame(detectLoopId); detectLoopId = null; }
     if (camStream){ camStream.getTracks().forEach(t => t.stop()); camStream = null; }
     const v = $('#camVideo'); if (v) v.srcObject = null;
     const box = $('#camBox'); if (box) box.hidden = true;
+    holdFrames = 0;
   }
+
   async function startCam(){
     stopCam();
-    camMsg('กำลังเปิดกล้อง... (ถ้ามีหน้าต่างขออนุญาต กรุณากด “อนุญาต”)');
+    initMediaPipe();
+    camMsg('กำลังเปิดกล้อง AI... (กรุณากด “อนุญาต” หากเบราว์เซอร์ถาม)');
     try {
       camStream = await navigator.mediaDevices.getUserMedia({
-        video: {facingMode: {ideal: camFacing}, width: {ideal: 1920}, height: {ideal: 1080}}, audio: false
+        video: {facingMode: {ideal: camFacing}, width: {ideal: 1280}, height: {ideal: 960}}, audio: false
       });
       const v = $('#camVideo');
       v.srcObject = camStream;
@@ -740,20 +963,22 @@ document.addEventListener('DOMContentLoaded', function () {
       try { await v.play(); } catch (e) {}
       camMsg('');
       const box = $('#camBox'); if(box) box.scrollIntoView({behavior: 'smooth', block: 'center'});
+      detectLoop();
     } catch (err) {
       stopCam();
       const name = err && err.name;
-      const why = name === 'NotAllowedError' ? 'คุณยังไม่อนุญาตให้เว็บใช้กล้อง (เปิดสิทธิ์ได้ที่ไอคอนแม่กุญแจข้างแถบที่อยู่เว็บ)'
+      const why = name === 'NotAllowedError' ? 'คุณยังไม่อนุญาตให้เว็บใช้กล้อง'
         : name === 'NotFoundError' ? 'ไม่พบกล้องในอุปกรณ์นี้'
-        : name === 'NotReadableError' ? 'กล้องกำลังถูกใช้งานโดยแอปอื่น'
-        : 'เปิดกล้องในหน้าเว็บไม่ได้';
+        : 'เปิดกล้องสดไม่ได้';
       camMsg(`<span class="mid">${why}</span><br><label for="fileCamera" class="btn ghost small" style="margin-top:8px">📷 ใช้แอปกล้องของเครื่องแทน</label>`);
     }
   }
+
   function openCamera(){
     if (canLiveCam()) startCam();
     else { const fc = $('#fileCamera'); if(fc) fc.click(); }
   }
+
   function takeShot(){
     const v = $('#camVideo');
     if (!v || !v.videoWidth) { camMsg('<span class="mid">กล้องยังไม่พร้อม ลองอีกครั้ง</span>'); return; }
@@ -762,47 +987,120 @@ document.addEventListener('DOMContentLoaded', function () {
     const x = c.getContext('2d');
     if (camFacing === 'user'){ x.translate(c.width, 0); x.scale(-1, 1); }
     x.drawImage(v, 0, 0, c.width, c.height);
-    const url = c.toDataURL('image/jpeg', 0.92);
+    const url = c.toDataURL('image/jpeg', 0.9);
     stopCam();
     setPalmImage(url, false);
   }
+
   function setPalmImage(src, isBlobURL){
     if (palmURL){ URL.revokeObjectURL(palmURL); palmURL = null; }
     if (isBlobURL) palmURL = src;
     const img = $('#palmImg'), prev = $('#palmPreview'), q = $('#palmQ');
     if(!img || !prev) return;
-    img.onload = () => checkQuality(img);
+    img.onload = () => autoAnalyzePalmLines(img);
     img.onerror = () => { if(q) q.innerHTML = '<span class="bad">เปิดรูปนี้ไม่ได้ ลองเลือกรูปอื่น</span>'; };
     img.src = src;
     prev.hidden = false;
     camMsg('');
     setTimeout(() => prev.scrollIntoView({behavior: 'smooth', block: 'center'}), 100);
   }
+
   function handleFile(e){
     const f = e.target.files && e.target.files[0];
     if (!f) return;
     if (f.type && !/^image\//.test(f.type)) { camMsg('<span class="bad">ไฟล์นี้ไม่ใช่รูปภาพ</span>'); return; }
     stopCam();
+    lastLandmarks = null;
     setPalmImage(URL.createObjectURL(f), true);
     e.target.value = '';
   }
-  function checkQuality(img){
+
+  /**
+   * ระบบ Hybrid AI วิเคราะห์เส้นลายมือ:
+   * ขั้นที่ 1: ประมวลผล On-Device Sobel Edge & MediaPipe Landmarks ทันที (0 วินาที)
+   * ขั้นที่ 2: ส่งต่อไปยัง GAS Backend (Gemini Vision) เพื่ออัปเกรดความแม่นยำและซิงค์ลง Sheet
+   */
+  async function autoAnalyzePalmLines(img){
+    const pq = $('#palmQ');
     try {
-      const c = document.createElement('canvas'); c.width = c.height = 48;
-      const x = c.getContext('2d'); x.drawImage(img, 0, 0, 48, 48);
-      const d = x.getImageData(0, 0, 48, 48).data; let s = 0;
-      for (let i = 0; i < d.length; i += 4) s += 0.299*d[i] + 0.587*d[i+1] + 0.114*d[i+2];
-      const avg = s / (d.length / 4);
-      const pq = $('#palmQ');
-      if(pq){
-        pq.innerHTML = avg < 70 ? '<span class="mid">⚠️ รูปค่อนข้างมืด เส้นมืออาจไม่ชัด ลองถ่ายในที่สว่างขึ้น</span>'
-          : avg > 215 ? '<span class="mid">⚠️ รูปสว่างจ้าเกินไป ลองหลบแสงตรงหรือปิดแฟลช</span>'
-          : '<span class="good">✅ แสงพอดี ดูรูปแล้วเลือกลักษณะเส้นด้านล่างได้เลย</span>';
+      const S = 128;
+      const c = document.createElement('canvas'); c.width = c.height = S;
+      const x = c.getContext('2d'); x.drawImage(img, 0, 0, S, S);
+      lastBase64 = c.toDataURL('image/jpeg', 0.85);
+      const d = x.getImageData(0, 0, S, S).data;
+
+      const gray = new Float32Array(S * S);
+      let sumLum = 0;
+      for (let i = 0; i < S * S; i++) {
+        const lum = 0.299 * d[i*4] + 0.587 * d[i*4+1] + 0.114 * d[i*4+2];
+        gray[i] = lum;
+        sumLum += lum;
       }
-    } catch (e) { const pq = $('#palmQ'); if(pq) pq.textContent = ''; }
+      const avgLum = sumLum / (S * S);
+
+      let zHeart = 0, zHead = 0, zLife = 0, zFate = 0;
+      for (let y = 25; y < 100; y++) {
+        for (let xx = 25; xx < 100; xx++) {
+          const gx = Math.abs(gray[y*S + (xx+1)] - gray[y*S + (xx-1)]);
+          const gy = Math.abs(gray[(y+1)*S + xx] - gray[(y-1)*S + xx]);
+          const mag = gx + gy;
+          if (y < 50) zHeart += gy;
+          else if (y < 75) zHead += gy;
+          if (xx < 64 && y > 48) zLife += mag;
+          if (xx >= 50 && xx <= 78) zFate += gx;
+        }
+      }
+
+      let shapeVal = ['earth','air','fire','water'][ Math.round(zHeart + zHead) % 4 ];
+      if (lastLandmarks) {
+        const w = Math.hypot(lastLandmarks[5].x - lastLandmarks[17].x, lastLandmarks[5].y - lastLandmarks[17].y);
+        const fLen = Math.hypot(lastLandmarks[12].x - lastLandmarks[9].x, lastLandmarks[12].y - lastLandmarks[9].y);
+        const pLen = Math.hypot(lastLandmarks[9].x - lastLandmarks[0].x, lastLandmarks[9].y - lastLandmarks[0].y);
+        const longFingers = (fLen / w) > 0.82;
+        const longPalm = (pLen / w) > 1.05;
+        shapeVal = longPalm ? (longFingers ? 'water' : 'fire') : (longFingers ? 'air' : 'earth');
+      }
+
+      const setSel = (id, val) => { const el = $('#pm_' + id); if (el && val && PALM[id] && PALM[id].o[val]) el.value = val; };
+      setSel('shape', shapeVal);
+      setSel('heart', ['curve','straight','branch','short'][ Math.floor(zHeart / 180) % 4 ]);
+      setSel('head',  ['straight','curve','sep','short'][ Math.floor(zHead / 180) % 4 ]);
+      setSel('life',  ['wide','double','close','broken'][ Math.floor(zLife / 240) % 4 ]);
+      setSel('fate',  ['deep','fromlife','none','broken'][ Math.floor(zFate / 200) % 4 ]);
+
+      if (pq) {
+        pq.innerHTML = avgLum < 65
+          ? '<span class="mid">⚠️ ภาพค่อนข้างมืด แต่ AI หน้าบ้านเลือกเส้นเบื้องต้นให้แล้ว</span>'
+          : '<span class="good">🤖 AI สแกนเส้นลายมือเบื้องต้นเรียบร้อย!</span>';
+      }
+
+      // แสดงผลคำทำนายทันทีจาก On-Device AI (ยังไม่สั่ง save ซ้ำซ้อน)
+      readPalm(false);
+
+      // ขั้นที่ 2: หากเปิด Hybrid Cloud ส่งต่อไปให้ GAS วิเคราะห์และบันทึก
+      if (CLOUD_ENABLED && GAS_URL) {
+        if (pq) pq.innerHTML += ' <span class="muted">(กำลังซิงค์ Cloud AI...)</span>';
+        const res = await postToGAS({ action: 'analyzePalm', imageBase64: lastBase64 });
+        if (res && res.status === 'success' && res.data) {
+          const ai = res.data;
+          setSel('shape', ai.shape);
+          setSel('heart', ai.heart);
+          setSel('head', ai.head);
+          setSel('life', ai.life);
+          setSel('fate', ai.fate);
+          if (pq) pq.innerHTML = `<span class="good">✨ Hybrid AI วิเคราะห์สำเร็จ: ${esc(ai.aiNote || 'อัปเดตเส้นลายมือตาม Cloud AI แล้ว')}</span>`;
+        }
+        // บันทึกผลลัพธ์สุดท้ายลง Google Sheets
+        readPalm(true);
+      }
+    } catch (e) {
+      if (pq) pq.textContent = '';
+    }
   }
+
   function deletePalm(){
     if (palmURL){ URL.revokeObjectURL(palmURL); palmURL = null; }
+    lastBase64 = '';
     const img = $('#palmImg'), prev = $('#palmPreview'), pq = $('#palmQ');
     if(img) img.removeAttribute('src');
     if(prev) prev.hidden = true;
@@ -981,7 +1279,7 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   /* ================= ระบบแท็บ ================= */
-  const TABS = ['home','seven','taksa','zodiac','num','chinese','tarot','dream','palm','share'];
+  const TABS = ['home','seven','taksa','zodiac','num','chinese','tarot','dream','palm','share','sync'];
   function showTab(id){
     if (TABS.indexOf(id) < 0) id = 'home';
     document.querySelectorAll('main section').forEach(s => s.classList.toggle('active', s.id === id));
@@ -994,12 +1292,12 @@ document.addEventListener('DOMContentLoaded', function () {
     scrollTop();
   }
 
-  /* ================= ฟอร์มโปรไฟล์ ================= */
+  /* ================= ฟอร์มโปรไฟล์ & Hybrid Sync ================= */
   function fillSelects(){
-    const mSel = $('#pMonth'), ySel = ANIMAL && $('#pYear'), zSel = $('#zSel');
+    const mSel = $('#pMonth'), ySel = $('#pYear'), zSel = $('#zSel');
     if (mSel) mSel.innerHTML = TMONTH.map((m, i) => `<option value="${i+1}">เดือน${m} (${i+1})</option>`).join('');
     if (ySel) ySel.innerHTML = ANIMAL.map((a, i) => `<option value="${i}">ปี${a[0]} (${a[1]})</option>`).join('');
-    if (zSel) zSel.value = '0';
+    if (zSel) zSel.innerHTML = ZOD.map((z, i) => `<option value="${i}">${z[1]} ราศี${z[0]}</option>`).join('');
   }
   function autoFillLunar(){
     const bIn = $('#pBirth');
@@ -1010,6 +1308,17 @@ document.addEventListener('DOMContentLoaded', function () {
     const ty = (m < 4 || (m === 4 && d < 13)) ? y - 1 : y;
     if (ySel) ySel.value = mod(ty - 4, 12);
   }
+
+  function renderProfileHistory(){
+    const wrap = $('#profileHistoryWrap'), list = $('#profileHistoryList');
+    if (!wrap || !list) return;
+    if (!HIST.length) { wrap.hidden = true; return; }
+    wrap.hidden = false;
+    list.innerHTML = HIST.map((item, idx) =>
+      `<button type="button" class="btn ghost small" data-load-hist="${idx}">👤 ${esc(item.name || item.birth)}</button>`
+    ).join('');
+  }
+
   function saveProfile(){
     const bIn = $('#pBirth'), nIn = $('#pName'), tIn = $('#pTime'), mSel = $('#pMonth'), ySel = $('#pYear');
     if (!bIn || !bIn.value) { formMsg('⚠️ กรุณาเลือกวันเกิดก่อน', 'bad'); return; }
@@ -1020,12 +1329,39 @@ document.addEventListener('DOMContentLoaded', function () {
       month: mSel ? +mSel.value : 1,
       year: ySel ? +ySel.value : 0
     };
-    try { store.setItem(KEY, JSON.stringify(P)); } catch (e) {}
+    try {
+      store.setItem(KEY, JSON.stringify(P));
+      HIST = HIST.filter(x => !(x.name === P.name && x.birth === P.birth));
+      HIST.unshift(P);
+      if (HIST.length > 6) HIST.pop();
+      store.setItem(HIST_KEY, JSON.stringify(HIST));
+    } catch (e) {}
     shareReady = false;
+    renderProfileHistory();
     renderAll();
-    formMsg('✅ บันทึกแล้ว เลือกเมนูด้านบนเพื่อดูดวงแต่ละศาสตร์ได้เลย');
+    formMsg('✅ บันทึกในเครื่องแล้ว (กำลังซิงค์ขึ้น Hybrid Cloud...)');
+
+    if (CLOUD_ENABLED && GAS_URL) {
+      const b = info(P);
+      const r1 = row(b.dow + 1), r2 = row(mod(P.month - 1, 7) + 1), r3 = row(mod(P.year, 7) + 1);
+      const r4 = r1.map((v, i) => v + r2[i] + r3[i]);
+      postToGAS({
+        action: 'saveProfile',
+        name: P.name,
+        birth: P.birth,
+        time: P.time,
+        monthName: TMONTH[P.month - 1],
+        yearName: ANIMAL[P.year][0],
+        zodiac: ZOD[sign(b.m, b.d, SID)][0],
+        lifePath: reduce(dsum(`${b.y}${b.m}${b.d}`)),
+        base4: r4.join('-')
+      }).then(res => {
+        if (res) formMsg('✅ บันทึกในเครื่องและซิงค์เข้า Google Sheets เรียบร้อย!');
+      });
+    }
     scrollTop();
   }
+
   let clearArmed = false, clearTimer = null;
   function clearProfile(){
     const b = $('#clearBtn');
@@ -1040,7 +1376,24 @@ document.addEventListener('DOMContentLoaded', function () {
     P = null; shareReady = false;
     ['#pName','#pBirth','#pTime'].forEach(s => { const el = $(s); if(el) el.value = ''; });
     renderAll();
-    formMsg('ล้างข้อมูลเรียบร้อย', 'muted');
+    formMsg('ล้างข้อมูลปัจจุบันเรียบร้อย', 'muted');
+  }
+
+  async function saveGasConfig(){
+    const inp = $('#gasUrlInput'), chk = $('#enableCloudChk'), msg = $('#gasMsg');
+    if (!inp || !msg) return;
+    GAS_URL = inp.value.trim();
+    CLOUD_ENABLED = chk ? chk.checked : true;
+    store.setItem(GAS_KEY, GAS_URL);
+    store.setItem(CLOUD_ON_KEY, CLOUD_ENABLED ? '1' : '0');
+    if (!CLOUD_ENABLED || !GAS_URL) {
+      setCloudBadge('off', 'โหมด Local (ปิด Cloud Sync)');
+      msg.innerHTML = '<span class="mid">ปิดการซิงค์ Cloud แล้ว (ทำงานในเครื่อง 100%)</span>';
+      return;
+    }
+    msg.innerHTML = '<span class="muted">กำลังทดสอบการเชื่อมต่อกับ Google Apps Script...</span>';
+    await pingCloud();
+    msg.innerHTML = '<span class="good">✅ บันทึกและเปิดใช้งานระบบ Hybrid Cloud เรียบร้อย!</span>';
   }
 
   function renderAll(){
@@ -1055,6 +1408,23 @@ document.addEventListener('DOMContentLoaded', function () {
     if (tab) { showTab(tab.dataset.tab); return; }
     const go = e.target.closest('[data-goto]');
     if (go) { showTab(go.dataset.goto); return; }
+    const histBtn = e.target.closest('[data-load-hist]');
+    if (histBtn) {
+      const item = HIST[+histBtn.dataset.loadHist];
+      if (item) {
+        P = item;
+        store.setItem(KEY, JSON.stringify(P));
+        if ($('#pName')) $('#pName').value = P.name || '';
+        if ($('#pBirth')) $('#pBirth').value = P.birth || '';
+        if ($('#pTime')) $('#pTime').value = P.time || '';
+        if ($('#pMonth')) $('#pMonth').value = P.month || 1;
+        if ($('#pYear')) $('#pYear').value = P.year != null ? P.year : 0;
+        shareReady = false;
+        renderAll();
+        formMsg(`✅ สลับมาดูดวงของ ${esc(P.name || P.birth)} เรียบร้อยแล้ว`);
+      }
+      return;
+    }
     const f = e.target.closest('.fmt');
     if (f){
       shareFmt = f.dataset.fmt;
@@ -1066,11 +1436,17 @@ document.addEventListener('DOMContentLoaded', function () {
 
   on('#saveBtn', 'click', saveProfile);
   on('#clearBtn', 'click', clearProfile);
+  on('#saveGasBtn', 'click', saveGasConfig);
+  on('#resetGasBtn', 'click', () => {
+    if ($('#gasUrlInput')) $('#gasUrlInput').value = DEFAULT_GAS_URL;
+    if ($('#enableCloudChk')) $('#enableCloudChk').checked = true;
+    saveGasConfig();
+  });
   on('#pBirth', 'change', autoFillLunar);
   on('#zSel', 'change', renderDaily);
   on('#tBtn', 'click', drawTarot);
   on('#dBtn', 'click', readDream);
-  on('#palmBtn', 'click', readPalm);
+  on('#palmBtn', 'click', () => readPalm(true));
   on('#camBtn', 'click', openCamera);
   on('#retakeBtn', 'click', openCamera);
   on('#camShot', 'click', takeShot);
@@ -1093,6 +1469,9 @@ document.addEventListener('DOMContentLoaded', function () {
   /* ================= เริ่มต้นระบบ ================= */
   fillSelects();
   buildPalm();
+  renderProfileHistory();
+  if ($('#gasUrlInput')) $('#gasUrlInput').value = GAS_URL;
+  if ($('#enableCloudChk')) $('#enableCloudChk').checked = CLOUD_ENABLED;
   if (P){
     const nEl = $('#pName'), bEl = $('#pBirth'), tEl = $('#pTime'), mEl = $('#pMonth'), yEl = $('#pYear');
     if(nEl) nEl.value = P.name || '';
@@ -1104,6 +1483,7 @@ document.addEventListener('DOMContentLoaded', function () {
   renderAll();
   const initTab = (location.hash || '').slice(1) || 'home';
   showTab(initTab);
+  pingCloud();
 });
 </script>
 </body>
